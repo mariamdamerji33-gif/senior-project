@@ -22,8 +22,8 @@ export function ForgotPasswordPage() {
     <AuthLayout>
       <h2 className="auth-stepTitle">Reset password</h2>
       <p className="auth-stepLead">
-        Enter the email for your account (School Admin, Coordinator, Teacher, or Family). If it is registered, we send
-        reset steps when email delivery is enabled.
+        Enter the email for your account. Staff and family accounts can reset a password here; family day-to-day access is
+        through the mobile app. If the email is registered, we send reset steps when email delivery is enabled.
       </p>
 
       {donePayload ? (

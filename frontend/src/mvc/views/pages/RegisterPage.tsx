@@ -36,8 +36,8 @@ export function RegisterPage() {
       <h2 className="auth-stepTitle">Create account</h2>
       <p className="auth-stepLead">
         <strong>Coordinator and Teacher</strong> can start immediately. <strong>School Admin</strong> needs approval
-        from another administrator. <strong>Family</strong> accounts are created by the school; sign in on the web or
-        mobile app — not through this registration form.
+        from another administrator. <strong>Family</strong> accounts are created by the school and sign in on the mobile
+        app only — not through this registration form.
       </p>
 
       <form

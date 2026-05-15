@@ -98,7 +98,7 @@ export function DashboardLanding() {
 
   const subtitle =
     role === 'super_admin'
-      ? 'Staff tools in the browser. Families can use the web dashboard or the mobile app.'
+      ? 'Staff tools in the browser. Families use the mobile app only.'
       : role === 'manager'
         ? 'Organize sessions and review notes & reports.'
         : role === 'therapist'

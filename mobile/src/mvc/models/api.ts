@@ -30,7 +30,7 @@ if (__DEV__) {
 const http = axios.create({
   baseURL: API_BASE_URL,
   timeout: 12000,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 'Content-Type': 'application/json', 'X-ASP-Client': 'mobile' },
   // Mobile uses Bearer token only; omit cookies to avoid CSRF/session edge cases with the API.
   withCredentials: false,
 })

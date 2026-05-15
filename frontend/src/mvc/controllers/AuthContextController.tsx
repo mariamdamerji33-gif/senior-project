@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { AuthUser, Role } from '@/types/auth'
 import { api } from '@/mvc/models/apiClient'
+import { FAMILY_WEB_SIGN_IN_MESSAGE, isFamilyWebUser } from '@/utils/familyWebAccess'
 
 type AuthContextValue = {
   user: AuthUser | null
@@ -23,7 +24,13 @@ function loadUser(): AuthUser | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
-    return JSON.parse(raw) as AuthUser
+    const parsed = JSON.parse(raw) as AuthUser
+    const cachedToken = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY)
+    if (isFamilyWebUser(parsed, cachedToken)) {
+      clearStoredSession()
+      return null
+    }
+    return parsed
   } catch {
     return null
   }
@@ -107,8 +114,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         const res = await api.me(token)
         if (cancelled) return
-        setUser(res.user as AuthUser)
-        saveSession(res.user as AuthUser, token)
+        const nextUser = res.user as AuthUser
+        if (isFamilyWebUser(nextUser, token)) {
+          setUser(null)
+          setToken(null)
+          clearStoredSession()
+          return
+        }
+        setUser(nextUser)
+        saveSession(nextUser, token)
       } catch {
         if (cancelled) return
         setUser(null)
@@ -131,6 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token,
       loading,
       applyAuthUser: (next) => {
+        if (isFamilyWebUser(next)) return
         setUser(next)
         if (token) saveSession(next, token)
       },
@@ -139,6 +154,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const res = await api.me(token)
           const nextUser = res.user as AuthUser
+          if (isFamilyWebUser(nextUser, token)) {
+            setUser(null)
+            setToken(null)
+            clearStoredSession()
+            return
+          }
           setUser(nextUser)
           saveSession(nextUser, token)
         } catch {
@@ -153,6 +174,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const res = await api.login({ email, password, role })
           if (isJwtExpired(res.token)) throw new Error('Login returned an expired session. Please try again.')
           const nextUser = res.user as AuthUser
+          if (isFamilyWebUser(nextUser, res.token)) {
+            clearStoredSession()
+            throw new Error(FAMILY_WEB_SIGN_IN_MESSAGE)
+          }
           setToken(res.token)
           setUser(nextUser)
           saveSession(nextUser, res.token)

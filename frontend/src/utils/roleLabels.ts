@@ -25,5 +25,5 @@ export const ROLE_OPTIONS: { value: Role; label: string }[] = [
 /** Self-registration: staff roles only (family accounts are created by the school). */
 export const WEB_PUBLIC_ROLE_OPTIONS = ROLE_OPTIONS.filter((r) => r.value !== 'parent')
 
-/** Sign-in role dropdown: reminder only; the server always uses the role stored for your account. */
-export const SIGN_IN_ROLE_OPTIONS = ROLE_OPTIONS
+/** Sign-in role dropdown (staff only on web; family uses the mobile app). */
+export const SIGN_IN_ROLE_OPTIONS = WEB_PUBLIC_ROLE_OPTIONS

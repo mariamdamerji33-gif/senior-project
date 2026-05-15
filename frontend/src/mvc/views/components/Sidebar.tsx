@@ -183,18 +183,8 @@ function iconForPath(to: string) {
   return 'dot'
 }
 
-const DASHBOARD_HOME: NavItem = { to: '/dashboard', label: 'Dashboard', roles: ['manager', 'therapist', 'parent'] }
-const MY_ACCOUNT: NavItem = { to: '/dashboard/account', label: 'Profile', roles: ['manager', 'therapist', 'super_admin', 'parent'] }
-
-const PARENT_NAV: NavItem[] = [
-  { to: '/dashboard/parent-daily-checkin', label: 'Daily check-in', roles: ['parent'] },
-  { to: '/dashboard/child-space', label: 'Child Space', roles: ['parent'] },
-  { to: '/dashboard/parent-treatment', label: 'IEP / Intervention plan', roles: ['parent'] },
-  { to: '/dashboard/parent-steps', label: 'Home steps', roles: ['parent'] },
-  { to: '/dashboard/parent-progress', label: 'Progress', roles: ['parent'] },
-  { to: '/dashboard/parent-reports', label: 'Notes & reports', roles: ['parent'] },
-  { to: '/dashboard/parent-chat', label: 'School chat', roles: ['parent'] },
-]
+const DASHBOARD_HOME: NavItem = { to: '/dashboard', label: 'Dashboard', roles: ['manager', 'therapist'] }
+const MY_ACCOUNT: NavItem = { to: '/dashboard/account', label: 'Profile', roles: ['manager', 'therapist', 'super_admin'] }
 
 const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard/analytics', label: 'Analytics', roles: ['super_admin'] },
@@ -267,7 +257,6 @@ export function Sidebar() {
           MY_ACCOUNT,
           DASHBOARD_HOME,
           ...NAV_ITEMS.filter((i) => i.roles.includes(role)),
-          ...PARENT_NAV.filter((i) => i.roles.includes(role)),
         ]
       : []
 

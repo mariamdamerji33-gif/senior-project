@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/mvc/controllers'
+import { isFamilyWebUser } from '@/utils/familyWebAccess'
 import type { Role } from '@/types/auth'
 import { SIGN_IN_ROLE_OPTIONS } from '@/utils/roleLabels'
 import { AuthLayout } from '@/mvc/views/components/auth/AuthLayout'
@@ -11,10 +12,9 @@ import { Select } from '@/mvc/views/components/ui/forms/Select'
 import { useToast } from '@/mvc/views/components/useToast'
 
 export function LoginPage() {
-  const { login } = useAuth()
+  const { login, user, token, logout, loading } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
-
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<Role>('therapist')
   const [password, setPassword] = useState('')
@@ -22,13 +22,29 @@ export function LoginPage() {
 
   const canSubmit = useMemo(() => email.trim().length > 3 && password.trim().length > 0, [email, password])
 
+  useEffect(() => {
+    if (!loading && isFamilyWebUser(user, token)) logout()
+  }, [loading, logout, token, user])
+
+  if (!loading && isFamilyWebUser(user, token)) {
+    return <Navigate to="/family-app" replace />
+  }
+
+  if (!loading && user) {
+    return <Navigate to="/dashboard" replace />
+  }
+
   return (
     <AuthLayout>
       <RegistrationNotifyBanner />
       <h2 className="auth-stepTitle">Sign in</h2>
       <p className="auth-stepLead">
-        Sign in with your school email. <strong>Family</strong> accounts can use this website or the mobile app. The
-        role you pick below is only a reminder — your real permissions always come from the database.
+        Sign in with your school email for staff access (School Admin, Coordinator, or Teacher).{' '}
+        <strong>Family</strong> accounts use the{' '}
+        <Link to="/family-app" className="ui-dashLink">
+          mobile app only
+        </Link>
+        . The role you pick below is only a reminder — your real permissions always come from the database.
       </p>
 
       <form
@@ -96,6 +112,11 @@ export function LoginPage() {
               <p className="login-errorHint">
                 Check the email, password, and selected role. If you are using seeded accounts from the project README,
                 match the account type to the role you selected.
+              </p>
+            ) : error.toLowerCase().includes('mobile app') ? (
+              <p className="login-errorHint">
+                Open <Link to="/family-app">Family access</Link> for app instructions. Family sign-in is not available on
+                this website.
               </p>
             ) : null}
           </div>

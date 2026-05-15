@@ -6,8 +6,10 @@
   "scripts": {
     "test": "node --test test/api.test.js",
     "start": "node server.js",
+    "dev": "node server.js",
     "seed:super-admin": "node scripts/seedSuperAdmin.js",
     "seed:school-users": "node scripts/seedSchoolUsers.js",
+    "seed:reset-school-passwords": "node scripts/resetSchoolUserPasswords.js",
     "sql:apply-password-reset": "node scripts/applyPasswordResetColumns.js",
     "mail:test": "node scripts/smtpTestEmail.js"
   },

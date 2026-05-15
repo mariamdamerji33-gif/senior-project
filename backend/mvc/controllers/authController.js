@@ -16,6 +16,7 @@ const { publicAccountJson, publicAccountFromJwtPayload } = require('../../utils/
 const { sendPasswordChangedEmail } = require('../../utils/passwordChangedEmail');
 const { sendPasswordResetEmail } = require('../../utils/passwordResetEmail');
 const { sendAccountCreatedEmail } = require('../../utils/accountCreatedEmail');
+const { familyLoginBlockedOnWeb } = require('../../utils/clientChannel');
 
 function setNoStore(res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -43,6 +44,14 @@ async function login(req, res) {
     const user = { id: data.id, email: data.email, name: data.name, role: data.role || null };
     if (!user.role) {
       return res.status(400).json({ error: 'User role is not set. Set users.role in Supabase.' });
+    }
+
+    if (familyLoginBlockedOnWeb(user.role, req)) {
+      return res.status(403).json({
+        error: 'Family accounts must sign in using the mobile app.',
+        code: 'FAMILY_USE_MOBILE_APP',
+        hint: 'Download Autism School Mobile or ask your school coordinator for the app link.',
+      });
     }
 
     // Backward compatibility: migrate old plain-text passwords to bcrypt on successful login.
@@ -123,6 +132,13 @@ async function me(req, res) {
       outgoing = publicAccountFromJwtPayload(req.auth);
     }
     if (!outgoing) return res.status(404).json({ error: 'User not found' });
+    if (familyLoginBlockedOnWeb(outgoing.role, req)) {
+      return res.status(403).json({
+        error: 'Family accounts must use the mobile app.',
+        code: 'FAMILY_USE_MOBILE_APP',
+        hint: 'Sign in with Autism School Mobile, not this website.',
+      });
+    }
     res.json({ user: outgoing });
   } catch (err) {
     res.status(500).json({

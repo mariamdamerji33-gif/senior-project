@@ -97,7 +97,12 @@ app.use(
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', process.env.CSRF_HEADER_NAME || 'x-csrf-token'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      process.env.CSRF_HEADER_NAME || 'x-csrf-token',
+      'X-ASP-Client',
+    ],
   }),
 );
 

@@ -21,6 +21,8 @@ const normalizedApiBaseUrl = normalizeApiBase(resolvedBase)
 const networkHint =
   ' Start the backend on port 5000, then use the Vite dev server (`npm run dev`) or preview with the same /api proxy (`npm run preview` — see vite.config). If you opened a built `index.html` from disk or use a static host without a proxy, set VITE_API_BASE_URL to your API origin before building. In deployment, set VITE_API_BASE_URL to the public backend URL.'
 const CSRF_HEADER = 'x-csrf-token'
+const CLIENT_CHANNEL_HEADER = 'X-ASP-Client'
+const WEB_CLIENT_CHANNEL = 'web'
 let csrfTokenCache: string | null = null
 
 function fallbackHttpMessage(status: number): string {
@@ -36,6 +38,9 @@ async function request<T>(path: string, options?: RequestInit, csrfAttempt = 0):
   const method = String(options?.method || 'GET').toUpperCase()
   const isWrite = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)
   const callerHeaders = new Headers(options?.headers || {})
+  if (!callerHeaders.has(CLIENT_CHANNEL_HEADER)) {
+    callerHeaders.set(CLIENT_CHANNEL_HEADER, WEB_CLIENT_CHANNEL)
+  }
   const isFormData = typeof FormData !== 'undefined' && options?.body instanceof FormData
   const hasBearer = /^Bearer\s+/i.test(callerHeaders.get('Authorization') || '')
 

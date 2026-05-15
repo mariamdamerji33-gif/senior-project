@@ -3,6 +3,7 @@ import { A11yUiPrefsProvider, AuthProvider } from '@/mvc/controllers'
 import { ToastProvider } from '@/mvc/views/components/ToastProvider'
 import { DashboardLayout } from '@/mvc/views/components/DashboardLayout'
 import { RequireAuth } from '@/mvc/views/components/RequireAuth'
+import { BlockFamilyWebAccess } from '@/mvc/views/components/BlockFamilyWebAccess'
 import { RoleGuard } from '@/mvc/views/components/RoleGuard'
 import { DashboardLanding } from '@/mvc/views/pages/DashboardLanding'
 import { LoginPage } from '@/mvc/views/pages/LoginPage'
@@ -33,13 +34,7 @@ import { NotFoundPage } from '@/mvc/views/pages/NotFoundPage'
 import { ForgotPasswordPage } from '@/mvc/views/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/mvc/views/pages/ResetPasswordPage'
 import { AccountProfilePage } from '@/mvc/views/pages/AccountProfilePage'
-import { ParentDailyCheckinsPage } from '@/mvc/views/pages/parent/ParentDailyCheckinsPage'
-import { ChildSpacePage } from '@/mvc/views/pages/parent/ChildSpacePage'
-import { ParentTreatmentPlansPage } from '@/mvc/views/pages/parent/ParentTreatmentPlansPage'
-import { ParentStepsPage } from '@/mvc/views/pages/parent/ParentStepsPage'
-import { ParentProgressPage } from '@/mvc/views/pages/parent/ParentProgressPage'
-import { ParentReportsPage } from '@/mvc/views/pages/parent/ParentReportsPage'
-import { ParentChatPage } from '@/mvc/views/pages/parent/ParentChatPage'
+const familyWebRedirect = <Navigate to="/family-app" replace />
 
 export default function App() {
   return (
@@ -61,7 +56,9 @@ export default function App() {
               path="/dashboard"
               element={
                 <RequireAuth>
-                  <DashboardLayout />
+                  <BlockFamilyWebAccess>
+                    <DashboardLayout />
+                  </BlockFamilyWebAccess>
                 </RequireAuth>
               }
             >
@@ -71,7 +68,7 @@ export default function App() {
               <Route
                 path="student/:studentId"
                 element={
-                  <RoleGuard allowedRoles={['super_admin', 'manager', 'therapist', 'parent']}>
+                  <RoleGuard allowedRoles={['super_admin', 'manager', 'therapist']}>
                     <StudentProfilePage />
                   </RoleGuard>
                 }
@@ -224,62 +221,13 @@ export default function App() {
                 }
               />
 
-              <Route
-                path="parent-daily-checkin"
-                element={
-                  <RoleGuard allowedRoles={['parent']}>
-                    <ParentDailyCheckinsPage />
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path="child-space"
-                element={
-                  <RoleGuard allowedRoles={['parent']}>
-                    <ChildSpacePage />
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path="parent-treatment"
-                element={
-                  <RoleGuard allowedRoles={['parent']}>
-                    <ParentTreatmentPlansPage />
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path="parent-steps"
-                element={
-                  <RoleGuard allowedRoles={['parent']}>
-                    <ParentStepsPage />
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path="parent-progress"
-                element={
-                  <RoleGuard allowedRoles={['parent']}>
-                    <ParentProgressPage />
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path="parent-reports"
-                element={
-                  <RoleGuard allowedRoles={['parent']}>
-                    <ParentReportsPage />
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path="parent-chat"
-                element={
-                  <RoleGuard allowedRoles={['parent']}>
-                    <ParentChatPage />
-                  </RoleGuard>
-                }
-              />
+              <Route path="parent-daily-checkin" element={familyWebRedirect} />
+              <Route path="child-space" element={familyWebRedirect} />
+              <Route path="parent-treatment" element={familyWebRedirect} />
+              <Route path="parent-steps" element={familyWebRedirect} />
+              <Route path="parent-progress" element={familyWebRedirect} />
+              <Route path="parent-reports" element={familyWebRedirect} />
+              <Route path="parent-chat" element={familyWebRedirect} />
 
               <Route path="*" element={<NotFoundPage />} />
             </Route>

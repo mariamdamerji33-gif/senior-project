@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { familyLoginBlockedOnWeb } = require('../utils/clientChannel');
 
 const JWT_SECRET = process.env.JWT_SECRET || '';
 const AUTH_COOKIE_NAME = String(process.env.AUTH_COOKIE_NAME || 'asp_auth').trim() || 'asp_auth';
@@ -85,6 +86,13 @@ function requireAuth(req, res, next) {
     if (!token) return res.status(401).json({ error: 'Missing token' });
 
     req.auth = verifyAuthToken(token);
+    if (familyLoginBlockedOnWeb(req.auth.role, req)) {
+      return res.status(403).json({
+        error: 'Family accounts must use the mobile app.',
+        code: 'FAMILY_USE_MOBILE_APP',
+        hint: 'Sign in with Autism School Mobile, not this website.',
+      });
+    }
     return next();
   } catch (err) {
     if (err?.statusCode === 503) {
