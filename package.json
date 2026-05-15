@@ -1,0 +1,23 @@
+{
+  "name": "senior-project",
+  "private": true,
+  "description": "Autism Communication & Learning Platform — run backend + frontend together",
+  "scripts": {
+    "start": "concurrently -n api,web -c blue,green \"npm run start --prefix backend\" \"npm run dev --prefix frontend\"",
+    "start:backend": "npm run start --prefix backend",
+    "start:frontend": "npm run dev --prefix frontend",
+    "start:mobile": "npm run start --prefix mobile",
+    "build": "npm run build --prefix frontend",
+    "build:prod": "npm run build --prefix frontend",
+    "deploy:check": "node scripts/check-live-deployment.js",
+    "deploy:check:strict": "node scripts/check-live-deployment.js --strict",
+    "lint": "npm run lint --prefix frontend",
+    "lint:mobile": "npm run lint --prefix mobile",
+    "typecheck:mobile": "npm run typecheck --prefix mobile",
+    "validate": "npm run lint --prefix frontend && npm run build --prefix frontend && npm test --prefix backend && npm run typecheck --prefix mobile && npm run lint --prefix mobile && npm run deploy:check",
+    "validate:strict": "npm run lint --prefix frontend && npm run build --prefix frontend && npm test --prefix backend && npm run typecheck --prefix mobile && npm run lint --prefix mobile && npm run deploy:check:strict"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

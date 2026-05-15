@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+            frontend/package-lock.json
+            mobile/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm ci || npm install
+          npm ci --prefix backend || npm install --prefix backend
+          npm ci --prefix frontend || npm install --prefix frontend
+          npm ci --prefix mobile || npm install --prefix mobile
+
+      - name: Frontend lint + build
+        run: npm run lint --prefix frontend && npm run build --prefix frontend
+
+      - name: Backend tests
+        run: npm test --prefix backend
+
+      - name: Mobile typecheck + lint
+        run: npm run typecheck --prefix mobile && npm run lint --prefix mobile

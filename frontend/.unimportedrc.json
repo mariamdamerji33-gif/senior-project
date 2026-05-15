@@ -1,0 +1,7 @@
+{
+  "entry": ["src/main.tsx"],
+  "project": "tsconfig.app.json",
+  "aliases": {
+    "@/*": ["./src/*"]
+  }
+}

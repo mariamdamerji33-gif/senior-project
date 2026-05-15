@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="ASP — Autism School Platform logo">
+  <defs>
+    <linearGradient id="bg" x1="56" y1="56" x2="456" y2="456" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b0a10"/>
+      <stop offset="0.55" stop-color="#171428"/>
+      <stop offset="1" stop-color="#0f0d14"/>
+    </linearGradient>
+
+    <linearGradient id="ring" x1="92" y1="72" x2="430" y2="442" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8c5cff"/>
+      <stop offset="0.55" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#1fd6c7"/>
+    </linearGradient>
+
+    <linearGradient id="mark" x1="120" y1="130" x2="392" y2="330" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8c5cff"/>
+      <stop offset="0.5" stop-color="#c4b5fd"/>
+      <stop offset="1" stop-color="#1fd6c7"/>
+    </linearGradient>
+
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="16" stdDeviation="14" flood-color="#000000" flood-opacity="0.55"/>
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#8c5cff" flood-opacity="0.18"/>
+    </filter>
+
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Base -->
+  <rect x="56" y="56" width="400" height="400" rx="104" fill="url(#bg)" filter="url(#shadow)"/>
+
+  <!-- Border ring -->
+  <rect x="56" y="56" width="400" height="400" rx="104" fill="none" stroke="url(#ring)" stroke-width="12" opacity="0.95"/>
+
+  <!-- Abstract “ASP” mark: A + S wave + P stem -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+    <!-- A -->
+    <path d="M170 338 206 214 242 338" stroke="url(#mark)" stroke-width="18"/>
+    <path d="M182 300h48" stroke="url(#mark)" stroke-width="14" opacity="0.95"/>
+
+    <!-- S (wave) -->
+    <path
+      d="M302 224c-26 0-50 14-50 34 0 18 16 28 42 34 34 8 56 16 56 40 0 26-28 42-60 42"
+      stroke="url(#mark)"
+      stroke-width="18"
+    />
+
+    <!-- P -->
+    <path d="M356 338V214" stroke="url(#mark)" stroke-width="18"/>
+    <path d="M356 214h34c20 0 36 14 36 32s-16 32-36 32h-34" stroke="url(#mark)" stroke-width="18"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text
+    x="256"
+    y="420"
+    text-anchor="middle"
+    fill="rgba(242,240,247,0.92)"
+    font-family="Outfit, DM Sans, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
+    font-size="54"
+    font-weight="800"
+    letter-spacing="8"
+  >
+    ASP
+  </text>
+</svg>
+
