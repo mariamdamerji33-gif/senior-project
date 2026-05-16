@@ -7,6 +7,7 @@ const { describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
 const app = require('../app');
+const { serviceRoleConfigured } = require('../config/database');
 
 describe('HTTP API', () => {
   test('GET / returns service metadata', async () => {
@@ -59,12 +60,16 @@ describe('HTTP API', () => {
     assert.ok(res.body.error);
   });
 
-  test('POST /api/auth/registration-status accepts valid email shape', async () => {
-    const res = await request(app)
-      .post('/api/auth/registration-status')
-      .send({ email: 'feature-smoke-check@example.com' })
-      .expect('Content-Type', /json/)
-      .expect(200);
-    assert.ok(typeof res.body.status === 'string');
-  });
+  test(
+    'POST /api/auth/registration-status accepts valid email shape',
+    { skip: !serviceRoleConfigured ? 'Supabase not configured (CI has no backend/.env)' : false },
+    async () => {
+      const res = await request(app)
+        .post('/api/auth/registration-status')
+        .send({ email: 'feature-smoke-check@example.com' })
+        .expect('Content-Type', /json/)
+        .expect(200);
+      assert.ok(typeof res.body.status === 'string');
+    },
+  );
 });
