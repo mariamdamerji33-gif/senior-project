@@ -36,7 +36,7 @@ export function ParentDrawerNavigator() {
         drawerType: 'permanent',
         /** Purple rail: navigation only (alerts live on the Today home card, top right). */
         drawerPosition: 'left',
-        sceneContainerStyle: { flex: 1, backgroundColor: colors.pageBg },
+        sceneStyle: { flex: 1, backgroundColor: colors.pageBg },
         drawerStyle: {
           width: drawerWidth,
           backgroundColor: 'transparent',

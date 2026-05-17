@@ -77,7 +77,7 @@ export function AdminDrawerNavigator() {
         headerShown: false,
         swipeEnabled: false,
         drawerType: 'permanent',
-        sceneContainerStyle: { flex: 1, backgroundColor: colors.pageBg },
+        sceneStyle: { flex: 1, backgroundColor: colors.pageBg },
         drawerStyle: { width: drawerWidth, backgroundColor: 'transparent', borderRightWidth: 0 },
         overlayColor: 'transparent',
       }}
