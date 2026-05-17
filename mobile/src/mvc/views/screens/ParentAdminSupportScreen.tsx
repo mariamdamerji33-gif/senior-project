@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Alert, Pressable, StyleSheet, Text, TextInput } from 'react-native'
+import { Alert, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
 import type { DrawerScreenProps } from '@react-navigation/drawer'
 import { InlineLoadError } from '../components/InlineLoadError'
 import { ScreenCard, ScreenScrollPage } from '../components/ScreenScrollPage'
@@ -17,6 +17,7 @@ export function ParentAdminSupportScreen({ route, navigation }: Props) {
   const { childId, childName } = route.params
   const [subject, setSubject] = useState('Parent mobile support')
   const [message, setMessage] = useState('')
+  const [includeStudent, setIncludeStudent] = useState(true)
   const [healthStatus, setHealthStatus] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
@@ -50,6 +51,7 @@ export function ParentAdminSupportScreen({ route, navigation }: Props) {
     sendFailedTitle: isEn ? 'Could not send request' : 'تعذر إرسال الطلب',
     sending: isEn ? 'Sending...' : 'جاري الإرسال...',
     sendToAdmin: isEn ? 'Send to admin' : 'إرسال للإدارة',
+    includeStudent: isEn ? 'Include selected student ID' : 'إرفاق معرّف الطفل المختار',
   }
 
   const checkHealth = async () => {
@@ -75,7 +77,7 @@ export function ParentAdminSupportScreen({ route, navigation }: Props) {
       await api.sendSupportRequest(token, {
         subject: subject.trim(),
         message: message.trim(),
-        childId,
+        ...(includeStudent && childId ? { childId } : {}),
       })
       setMessage('')
       Alert.alert(copy.sentTitle, copy.sentBody)
@@ -121,6 +123,10 @@ export function ParentAdminSupportScreen({ route, navigation }: Props) {
           placeholderTextColor="#9c94b0"
           textAlign={isArabic ? 'right' : 'left'}
         />
+        <View style={[styles.switchRow, isArabic && styles.switchRowRtl]}>
+          <Text style={[styles.switchLabel, isArabic && styles.rtl]}>{copy.includeStudent}</Text>
+          <Switch value={includeStudent} onValueChange={setIncludeStudent} />
+        </View>
         <TextInput
           style={[styles.input, styles.messageInput, isArabic && styles.rtl]}
           value={message}
@@ -140,20 +146,23 @@ export function ParentAdminSupportScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  cardHeading: { color: '#2c2144', fontWeight: '900', fontSize: 16, marginBottom: 4 },
-  line: { color: '#5f5573', lineHeight: 21, fontWeight: '600' },
+  cardHeading: { color: '#17131f', fontWeight: '900', fontSize: 16, marginBottom: 4 },
+  line: { color: '#534c62', lineHeight: 21, fontWeight: '600' },
   lineMuted: { color: '#7c7392', lineHeight: 20, fontSize: 12, marginTop: 4 },
   rtl: { textAlign: 'right', writingDirection: 'rtl' },
   input: {
     borderWidth: 1,
-    borderColor: '#d8cffa',
+    borderColor: '#cfc4e6',
     borderRadius: 12,
     backgroundColor: '#faf8ff',
     padding: 14,
-    color: '#2c2144',
+    color: '#17131f',
     fontWeight: '600',
   },
   messageInput: { minHeight: 110, textAlignVertical: 'top' },
+  switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 4 },
+  switchRowRtl: { flexDirection: 'row-reverse' },
+  switchLabel: { flex: 1, color: '#534c62', fontWeight: '600', fontSize: 14 },
   secondaryBtnText: { textAlign: 'center' },
   sendText: { textAlign: 'center' },
 })

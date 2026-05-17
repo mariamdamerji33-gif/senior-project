@@ -280,6 +280,13 @@ export const api = {
     })
     return data
   },
+  async deleteChatMessage(token: string, messageId: string, childId: string) {
+    const { data } = await http.delete<{ ok: boolean }>(`/api/chat/messages/${encodeURIComponent(messageId)}`, {
+      params: { childId },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    return data
+  },
   async sendVoiceNote(token: string, params: { childId: string; uri: string; mimeType?: string }) {
     const form = new FormData()
     form.append('childId', params.childId)
@@ -324,21 +331,21 @@ export const api = {
     })
     return data
   },
-  async therapistChildren(token: string) {
-    const { data } = await http.get<{ children: Array<{ id: string; name: string; age: number }> }>('/api/therapist/children', {
+  async teacherChildren(token: string) {
+    const { data } = await http.get<{ children: Array<{ id: string; name: string; age: number }> }>('/api/teacher/children', {
       headers: { Authorization: `Bearer ${token}` },
     })
     return data
   },
-  async therapistOverview(token: string) {
-    const { data } = await http.get<{ counts: Record<string, number> }>('/api/therapist/overview', {
+  async teacherOverview(token: string) {
+    const { data } = await http.get<{ counts: Record<string, number> }>('/api/teacher/overview', {
       headers: { Authorization: `Bearer ${token}` },
     })
     return data
   },
-  async therapistProgress(token: string, childId: string) {
+  async teacherProgress(token: string, childId: string) {
     const { data } = await http.get<{ progress: Array<{ id: string; score: number; date: string; activityTitle?: string }> }>(
-      '/api/therapist/progress',
+      '/api/teacher/progress',
       { params: { childId }, headers: { Authorization: `Bearer ${token}` } },
     )
     return data

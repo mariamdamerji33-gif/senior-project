@@ -15,6 +15,8 @@ This folder is initialized with **Expo + React Native + TypeScript** and wired t
 - **`parent`** — full family home (progress, chat, check-ins, child activities, notifications). This build is optimized for parents.
 - **Other roles** — sign-in is limited to parent accounts for this app; staff continue to use the web dashboard (`frontend/`).
 
+Production builds: set `expo.extra.apiBaseUrl` in `app.json` to your HTTPS API, then use Expo EAS — see **`PUBLISHING.md`** at the repo root (section 4).
+
 ## Run
 
 ```bash

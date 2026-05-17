@@ -7,6 +7,9 @@ import { Button } from '@/mvc/views/components/ui/Button'
 import { Select } from '@/mvc/views/components/ui/forms/Select'
 import { TextInput } from '@/mvc/views/components/ui/forms/TextInput'
 import { useConfirmDialog } from '@/mvc/views/components/ui/useConfirmDialog'
+import { TableRowActionsMenu } from '@/mvc/views/components/ui/TableRowActionsMenu'
+import { RowEditPopover } from '@/mvc/views/components/ui/RowEditPopover'
+import { AdminUserEditForm } from '@/mvc/views/components/admin/AdminUserEditForm'
 
 type AdminUser = {
   id: string
@@ -16,7 +19,6 @@ type AdminUser = {
   created_at?: string
 }
 
-/** Ensures the row we just created appears even if GET /admin-users returns an incomplete list (e.g. RLS/read quirks). */
 function mergeCreatedIntoList(list: AdminUser[], created: unknown): AdminUser[] {
   if (!created || typeof created !== 'object') return list
   const u = created as AdminUser
@@ -54,6 +56,7 @@ export function AdminUsersPage() {
   const [editPassword, setEditPassword] = useState('')
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
 
   async function refresh(ensureUser?: AdminUser | null) {
     if (!token) return
@@ -73,9 +76,9 @@ export function AdminUsersPage() {
         const res = await api.adminUsers(token)
         if (cancelled) return
         setAdmins(((res.users ?? res.admins) || []) as AdminUser[])
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (cancelled) return
-        setError(err?.message || 'Failed to load admin users')
+        setError(err instanceof Error ? err.message : 'Failed to load admin users')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -93,6 +96,7 @@ export function AdminUsersPage() {
   }, [createSuccess])
 
   function openEdit(u: AdminUser) {
+    setMenuOpenId(null)
     setEditing(u)
     setEditName(u.name || '')
     setEditEmail(u.email)
@@ -107,14 +111,38 @@ export function AdminUsersPage() {
     setEditError(null)
   }
 
+  function saveEdit() {
+    if (!token || !editing?.id) return
+    setEditSaving(true)
+    setEditError(null)
+    void (async () => {
+      try {
+        const payload: {
+          name?: string
+          email?: string
+          role?: RoleOpt
+          password?: string
+        } = {
+          name: editName.trim() || undefined,
+          email: editEmail.trim().toLowerCase(),
+          role: editRole,
+        }
+        if (editPassword.trim().length >= 3) payload.password = editPassword.trim()
+        await api.adminUpdateUser(token, editing.id, payload)
+        await refresh()
+        closeEdit()
+      } catch (e: unknown) {
+        setEditError(e instanceof Error ? e.message : 'Update failed')
+      } finally {
+        setEditSaving(false)
+      }
+    })()
+  }
+
   return (
     <div className="ui-page">
       <h2 className="ui-pageTitle">Admin Management</h2>
-      <p className="ui-pageLead">
-        Create, update, or remove users. The table lists everyone in the database (admin, coordinator, teacher, family).
-      </p>
-
-      {loading ? <div style={{ opacity: 0.85 }}>Loading...</div> : null}
+      {loading ? <div style={{ opacity: 0.85 }}>Loadingâ€¦</div> : null}
       {error ? (
         <div className="ui-alert ui-alertError ui-textErrorStrong" role="alert">
           {error}
@@ -176,10 +204,10 @@ export function AdminUsersPage() {
                   setName('')
                   setEmail('')
                   setPassword('')
-                  setCreateSuccess('User created. Refreshing list…')
+                  setCreateSuccess('User created. Refreshing listâ€¦')
                   const createdRow = out?.user as AdminUser | undefined
                   await refresh(createdRow ?? null)
-                  setCreateSuccess('User added — they appear in the table below.')
+                  setCreateSuccess('User added â€” they appear in the table below.')
                 } catch (err: unknown) {
                   setCreateError(err instanceof Error ? err.message : 'Failed to create user')
                 } finally {
@@ -188,7 +216,7 @@ export function AdminUsersPage() {
               })()
             }}
           >
-            {creating ? 'Creating…' : 'Create user'}
+            {creating ? 'Creatingâ€¦' : 'Create user'}
           </Button>
 
           {createSuccess ? (
@@ -203,88 +231,6 @@ export function AdminUsersPage() {
           ) : null}
         </div>
       </Card>
-
-      {editing ? (
-        <Card className="ui-sectionCard" style={{ marginBottom: 12 }}>
-          <h3 className="ui-sectionTitle">Edit user</h3>
-          <p className="ui-textMuted" style={{ margin: '0 0 12px' }}>
-            {editing.email}
-          </p>
-          <div className="ui-formGrid">
-            <label className="ui-field">
-              <span className="ui-fieldLabel">Name</span>
-              <TextInput value={editName} onChange={(e) => setEditName(e.target.value)} />
-            </label>
-            <label className="ui-field">
-              <span className="ui-fieldLabel">Email</span>
-              <TextInput value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
-            </label>
-            <label className="ui-field">
-              <span className="ui-fieldLabel">Role</span>
-              <Select value={editRole} onChange={(e) => setEditRole(e.target.value as RoleOpt)}>
-                {ROLE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </Select>
-            </label>
-            <label className="ui-field">
-              <span className="ui-fieldLabel">New password (optional)</span>
-              <TextInput
-                value={editPassword}
-                onChange={(e) => setEditPassword(e.target.value)}
-                type="password"
-                placeholder="Leave blank to keep current"
-              />
-            </label>
-          </div>
-          {editError ? (
-            <div className="ui-alert ui-alertError ui-textErrorStrong" style={{ marginTop: 10 }} role="alert">
-              {editError}
-            </div>
-          ) : null}
-          <div className="ui-actionsRow" style={{ marginTop: 12 }}>
-            <Button
-              type="button"
-              variant="primary"
-              disabled={!token || editSaving || editEmail.trim().length < 3}
-              onClick={() => {
-                if (!token || !editing?.id) return
-                setEditSaving(true)
-                setEditError(null)
-                void (async () => {
-                  try {
-                    const payload: {
-                      name?: string
-                      email?: string
-                      role?: RoleOpt
-                      password?: string
-                    } = {
-                      name: editName.trim() || undefined,
-                      email: editEmail.trim().toLowerCase(),
-                      role: editRole,
-                    }
-                    if (editPassword.trim().length >= 3) payload.password = editPassword.trim()
-                    await api.adminUpdateUser(token, editing.id, payload)
-                    await refresh()
-                    closeEdit()
-                  } catch (e: unknown) {
-                    setEditError(e instanceof Error ? e.message : 'Update failed')
-                  } finally {
-                    setEditSaving(false)
-                  }
-                })()
-              }}
-            >
-              {editSaving ? 'Saving…' : 'Save changes'}
-            </Button>
-            <Button type="button" variant="ghost" onClick={closeEdit} disabled={editSaving}>
-              Cancel
-            </Button>
-          </div>
-        </Card>
-      ) : null}
 
       <Card className="ui-sectionCard">
         <h3 className="ui-sectionTitle">All users</h3>
@@ -301,7 +247,7 @@ export function AdminUsersPage() {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Role</th>
-                  <th>Actions</th>
+                  <th aria-label="Actions" />
                 </tr>
               </thead>
               <tbody>
@@ -309,20 +255,18 @@ export function AdminUsersPage() {
                   const isSelf = !!me?.id && u.id === me.id
                   return (
                     <tr key={u.id}>
-                      <td>{u.name || '—'}</td>
-                      <td>{u.email}</td>
-                      <td>{formatRoleLabel(u.role)}</td>
-                      <td>
-                        <div className="ui-actionsRow" style={{ gap: 8 }}>
-                          <Button type="button" variant="ghost" onClick={() => openEdit(u)}>
-                            Edit
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            disabled={!token || isSelf}
-                            title={isSelf ? 'You cannot delete your own account' : undefined}
-                            onClick={() => {
+                        <td>{u.name || 'â€”'}</td>
+                        <td>{u.email}</td>
+                        <td>{formatRoleLabel(u.role)}</td>
+                        <td>
+                          <div id={`user-row-actions-${u.id}`} className="ui-rowActionsHost">
+                          <TableRowActionsMenu
+                            open={menuOpenId === u.id}
+                            onOpenChange={(open) => setMenuOpenId(open ? u.id : null)}
+                            onUpdate={() => openEdit(u)}
+                            deleteDisabled={!token || isSelf}
+                            deleteTitle={isSelf ? 'You cannot delete your own account' : undefined}
+                            onDelete={() => {
                               if (!token || isSelf) return
                               void (async () => {
                                 const ok = await confirm({
@@ -341,11 +285,9 @@ export function AdminUsersPage() {
                                 }
                               })()
                             }}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </td>
+                          />
+                          </div>
+                        </td>
                     </tr>
                   )
                 })}
@@ -354,6 +296,28 @@ export function AdminUsersPage() {
           </div>
         )}
       </Card>
+      <RowEditPopover
+        open={!!editing}
+        centered
+        title={editing ? `Update ${editing.email}` : 'Update user'}
+        onClose={closeEdit}
+      >
+        <AdminUserEditForm
+          editName={editName}
+          editEmail={editEmail}
+          editRole={editRole}
+          editPassword={editPassword}
+          editError={editError}
+          editSaving={editSaving}
+          canSave={!!token && editEmail.trim().length >= 3}
+          onNameChange={setEditName}
+          onEmailChange={setEditEmail}
+          onRoleChange={setEditRole}
+          onPasswordChange={setEditPassword}
+          onSave={saveEdit}
+          onCancel={closeEdit}
+        />
+      </RowEditPopover>
       {confirmDialog}
     </div>
   )

@@ -6,6 +6,7 @@ const { supabaseAdmin } = require('../../config/database');
 const { publicAccountJson, USER_PHOTO_BUCKET } = require('../../utils/userProfile');
 const { isAllowedProfileImageBuffer } = require('../../utils/image');
 const { normalizeBirthDateToIso } = require('../../utils/birthDateNormalize');
+const { normalizePhoneToE164 } = require('../../utils/phoneNormalize');
 const { normalizeSessionStatus } = require('../../utils/sessionStatus');
 const { isUuid, isNonEmptyString, isIsoDateLike, toInt, clampString } = require('../../utils/validate');
 const { writeAuditLog, baseActor } = require('../../utils/auditLog');
@@ -111,8 +112,9 @@ async function patchParentProfile(req, res) {
     const body = req.body || {};
     const updates = {};
     if ('phone' in body) {
-      const p = clampString(String(body.phone ?? '').trim(), 80);
-      updates.phone = p || null;
+      const phoneNorm = normalizePhoneToE164(body.phone);
+      if (!phoneNorm.ok) return res.status(400).json({ error: phoneNorm.error });
+      updates.phone = phoneNorm.value;
     }
     if ('birthDate' in body) {
       const v = body.birthDate;
@@ -470,8 +472,6 @@ module.exports = {
   createChild,
   deleteChild,
   listSessions,
-  createSession,
   updateSession,
-  deleteSession,
   listReports,
 };

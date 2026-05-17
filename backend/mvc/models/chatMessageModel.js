@@ -21,6 +21,21 @@ async function findByChildId(childId) {
   return (data || []).map(mapRow);
 }
 
+async function findById(id) {
+  const { data, error } = await db()
+    .from('chat_messages')
+    .select('id,child_id,sender_id,sender_role,body,created_at')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRow(data) : null;
+}
+
+async function deleteById(id) {
+  const { error } = await db().from('chat_messages').delete().eq('id', id);
+  if (error) throw error;
+}
+
 async function insertMessage({ childId, senderId, senderRole, body }) {
   const { data, error } = await db()
     .from('chat_messages')
@@ -37,4 +52,4 @@ async function insertMessage({ childId, senderId, senderRole, body }) {
   return data ? mapRow(data) : null;
 }
 
-module.exports = { findByChildId, insertMessage };
+module.exports = { findByChildId, findById, deleteById, insertMessage };

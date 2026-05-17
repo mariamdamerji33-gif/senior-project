@@ -50,9 +50,9 @@ function summaryHtml(summary: WeeklySummary) {
         body { font-family: Arial, sans-serif; color: #1f1630; padding: 24px; }
         h1 { color: #5f3dc9; margin: 0 0 12px; }
         .meta { color: #6d6485; margin-bottom: 16px; }
-        .card { border: 1px solid #e2daf7; border-radius: 10px; padding: 12px; margin-bottom: 10px; background: #faf8ff; }
-        .title { font-size: 14px; color: #5f5573; margin-bottom: 4px; }
-        .value { font-size: 22px; font-weight: 700; color: #2c2144; }
+        .card { border: 1px solid #dfd6ee; border-radius: 10px; padding: 12px; margin-bottom: 10px; background: #faf8ff; }
+        .title { font-size: 14px; color: #534c62; margin-bottom: 4px; }
+        .value { font-size: 22px; font-weight: 700; color: #17131f; }
       </style>
     </head>
     <body>
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   refreshText: { textAlign: 'center' },
   empty: { color: '#6d6485', fontWeight: '600' },
   cardTitle: { color: '#6d6485', fontWeight: '800', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
-  cardValue: { color: '#2c2144', fontSize: 22, fontWeight: '800' },
+  cardValue: { color: '#17131f', fontSize: 22, fontWeight: '800' },
   cardSub: { color: '#7c7392', fontSize: 12, marginTop: 6 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   miniCard: {
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e2daf7',
+    borderColor: '#dfd6ee',
     padding: 14,
     gap: 4,
     shadowColor: '#1e1040',
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   miniTitle: { color: '#6d6485', fontWeight: '700', fontSize: 12 },
-  miniValue: { color: '#2c2144', fontSize: 20, fontWeight: '800' },
+  miniValue: { color: '#17131f', fontSize: 20, fontWeight: '800' },
   shareBtn: { marginTop: 8 },
   shareBtnText: { textAlign: 'center' },
 })

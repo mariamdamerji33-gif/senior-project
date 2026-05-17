@@ -99,7 +99,7 @@ const surfaceStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#e5dcfb',
+    borderColor: '#dfd6ee',
     backgroundColor: '#fdfcff',
   },
   btnPressed: { opacity: 0.85 },
@@ -107,7 +107,7 @@ const surfaceStyles = StyleSheet.create({
     borderColor: '#0f172a',
     backgroundColor: '#e2e8f0',
   },
-  btnText: { color: '#2c2144', fontWeight: '900', fontSize: 15 },
+  btnText: { color: '#17131f', fontWeight: '900', fontSize: 15 },
 })
 
 const drawerStyles = StyleSheet.create({

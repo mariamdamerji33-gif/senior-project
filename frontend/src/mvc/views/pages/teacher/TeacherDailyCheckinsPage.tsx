@@ -97,7 +97,7 @@ function MiniTrendCharts({ items }: { items: Checkin[] }) {
   )
 }
 
-export function TherapistDailyCheckinsPage() {
+export function TeacherDailyCheckinsPage() {
   const { token } = useAuth()
   const [children, setChildren] = useState<ChildRow[]>([])
   const [childId, setChildId] = useState('')
@@ -110,7 +110,7 @@ export function TherapistDailyCheckinsPage() {
     let cancelled = false
     void (async () => {
       try {
-        const res = await api.therapistChildren(token)
+        const res = await api.teacherChildren(token)
         if (cancelled) return
         const list = (res.children || []) as ChildRow[]
         setChildren(list)
@@ -129,7 +129,7 @@ export function TherapistDailyCheckinsPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await api.therapistDailyCheckins(token, childId)
+      const res = await api.teacherDailyCheckins(token, childId)
       setCheckins((res.checkins || []) as Checkin[])
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load check-ins')
@@ -149,11 +149,7 @@ export function TherapistDailyCheckinsPage() {
   return (
     <div className="ui-page">
       <h2 className="ui-pageTitle">Daily check-ins</h2>
-      <p className="ui-pageLead ui-pageLeadNarrow">
-        Review daily family feedback for each student (sleep, mood, appetite, meltdowns, notes).
-      </p>
-
-      <Card style={{ padding: 16, marginBottom: 12 }}>
+<Card style={{ padding: 16, marginBottom: 12 }}>
         <div className="ui-row" style={{ justifyContent: 'space-between' }}>
           <label style={{ minWidth: 260, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span className="ui-fieldLabel">Student</span>

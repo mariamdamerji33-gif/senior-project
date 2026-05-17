@@ -1,16 +1,20 @@
-/** Brand palette — parent mobile UI */
+/**
+ * Brand palette — aligned with website (`frontend/src/index.css`).
+ * Blue accent · white surfaces · sky-blue secondary.
+ */
 export const colors = {
-  primary: '#7c4dff',
-  primaryDark: '#6b3df0',
-  primaryDeep: '#2c1b57',
-  secondarySurface: '#f3edff',
-  secondaryBorder: '#d9ccff',
-  outlineBorder: '#e5dcfb',
+  primary: '#1d4ed8',
+  primaryDark: '#1e40af',
+  primaryDeep: '#0f172a',
+  calm: '#0284c7',
+  secondarySurface: '#f1f5f9',
+  secondaryBorder: '#cbd5e1',
+  outlineBorder: '#bfdbfe',
   surface: '#ffffff',
-  surfaceSoft: '#faf7ff',
-  pageBg: '#f4f0ff',
-  text: '#24173f',
-  textMuted: '#6c6384',
-  textTitle: '#1d1530',
-  danger: '#b42318',
+  surfaceSoft: '#f8fafc',
+  pageBg: '#eff6ff',
+  text: '#475569',
+  textMuted: '#64748b',
+  textTitle: '#0f172a',
+  danger: '#b91c1c',
 } as const

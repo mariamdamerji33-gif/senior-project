@@ -15,6 +15,7 @@ const COPY = {
     lead: 'The purple bar on the left has short names. Here is what each one means in everyday words.',
     foot: 'Tip: If you are not sure where to go, open Today and use the large buttons on the home page.',
     rows: [
+      { icon: '◎', name: 'Profile', text: 'Your account: name, email, phone, birthday, photo (set by the school), security settings, and sign out. Tap the app logo or ◎ at the top of the purple bar.' },
       { icon: '⌂', name: 'Today', text: 'Your home page. See what to do today and your child’s summary.' },
       { icon: '▦', name: 'Child dashboard', text: 'A simple dashboard for your child — goals and notes in one place.' },
       { icon: '✓', name: 'Daily', text: 'Daily check-in for the school: mood, sleep, food, and short notes.' },
@@ -30,6 +31,7 @@ const COPY = {
     lead: 'الشريط البنفسجي على اليسار فيه أسماء قصيرة. هذا معنى كل زر بلغة بسيطة.',
     foot: 'نصيحة: إذا لم تعرف أين تذهب، افتح «اليوم» واستخدم الأزرار الكبيرة في الصفحة الرئيسية.',
     rows: [
+      { icon: '◎', name: 'الملف', text: 'حسابك: الاسم، البريد، الهاتف، تاريخ الميلاد، الصورة (من المدرسة)، الأمان، وتسجيل الخروج. اضغط شعار التطبيق أو ◎ أعلى الشريط البنفسجي.' },
       { icon: '⌂', name: 'اليوم', text: 'صفحتك الرئيسية. تعرض ماذا تفعل اليوم وملخصاً عن طفلك.' },
       { icon: '▦', name: 'لوحة طفلك', text: 'لوحة بسيطة لطفلك — أهداف وملاحظات في مكان واحد.' },
       { icon: '✓', name: 'يومي', text: 'متابعة يومية للمدرسة: المزاج، النوم، الأكل، وملاحظات قصيرة.' },

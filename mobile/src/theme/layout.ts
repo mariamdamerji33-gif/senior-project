@@ -5,7 +5,7 @@ import { colors } from './colors'
 export const PAGE_PAD = 18
 
 const cardShadow = {
-  shadowColor: '#241344',
+  shadowColor: colors.primaryDeep,
   shadowOffset: { width: 0, height: 12 },
   shadowOpacity: 0.11,
   shadowRadius: 22,
@@ -13,9 +13,9 @@ const cardShadow = {
 }
 
 export const screenLayout = StyleSheet.create({
-  pageBg: { flex: 1, backgroundColor: '#f7f2ff' },
+  pageBg: { flex: 1, backgroundColor: colors.pageBg },
   scrollOuter: { flexGrow: 1, paddingBottom: 28 },
-  /** Purple hero — full width inside scroll. */
+  /** Blue hero — full width inside scroll. */
   headerBand: {
     backgroundColor: colors.primaryDeep,
     paddingHorizontal: PAGE_PAD + 2,
@@ -34,7 +34,7 @@ export const screenLayout = StyleSheet.create({
     elevation: 5,
   },
   headerEyebrow: {
-    color: '#d5c8ff',
+    color: '#93c5fd',
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -48,7 +48,7 @@ export const screenLayout = StyleSheet.create({
     letterSpacing: -0.7,
   },
   headerSubtitle: {
-    color: '#efe9ff',
+    color: '#e2e8f0',
     fontSize: 14,
     fontWeight: '700',
     marginTop: 8,

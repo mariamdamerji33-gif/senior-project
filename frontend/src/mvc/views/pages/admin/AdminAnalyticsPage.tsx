@@ -35,9 +35,7 @@ export function AdminAnalyticsPage() {
   return (
     <div className="ui-page">
       <h2 className="ui-pageTitle">Analytics</h2>
-      <p className="ui-pageLead">System overview (counts).</p>
-
-      {loading ? <div style={{ opacity: 0.85 }}>Loading...</div> : null}
+{loading ? <div style={{ opacity: 0.85 }}>Loading...</div> : null}
       {error ? (
         <div className="ui-alert ui-alertError ui-textErrorStrong" role="alert">
           {error}

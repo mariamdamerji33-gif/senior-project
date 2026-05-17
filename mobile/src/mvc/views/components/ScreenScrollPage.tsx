@@ -46,7 +46,7 @@ export function ScreenScrollPage({
   const { appColors, highContrast } = useDisplayComfort()
 
   return (
-    <SafeAreaView style={[screenLayout.pageBg, { backgroundColor: appColors.pageBg }]} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[screenLayout.pageBg, { flex: 1, backgroundColor: appColors.pageBg }]} edges={['top', 'right', 'bottom']}>
       <BrandWallpaperDecor />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"

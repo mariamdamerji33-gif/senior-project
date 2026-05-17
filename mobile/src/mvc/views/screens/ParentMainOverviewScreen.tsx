@@ -15,8 +15,10 @@ import { useLanguage, type AppLanguage } from '../../controllers/LanguageControl
 import { loadStarsForToday } from '../../../rewards/childRewards'
 import type { ParentDrawerParamList } from '../../../navigation/parentDrawerTypes'
 import { InlineLoadError } from '../components/InlineLoadError'
+import { useDisplayComfort } from '../../controllers/DisplayComfortController'
 import { colors } from '../../../theme/colors'
 import { readCachedJson, writeCachedJson } from '../../../offline/offlineCache'
+import { useComfortAwareStyles } from '../../../utils/comfortAwareStyles'
 
 type Props = DrawerScreenProps<ParentDrawerParamList, 'MainOverview'>
 type ParentProgressItem = { id: string; score: number; date: string; activityTitle?: string }
@@ -38,6 +40,8 @@ const HOME_COPY = {
     intro: (name: string) => `This page tells you what to do today for ${name}.`,
     menuHint:
       'Tip: Tap the bell on the right above for school alerts. The purple bar on the left opens Daily, Board, Play, Chat, Reports, and more. To sign out, use Profile and security.',
+    profile: 'Profile',
+    profileA11y: 'Profile and security',
     alerts: 'Alerts',
     alertsA11y: (count: number) => (count > 0 ? `Alerts, ${count} unread` : 'Alerts'),
     childFallback: 'your child',
@@ -138,6 +142,8 @@ const HOME_COPY = {
     intro: (name: string) => `هذه الصفحة تخبرك ماذا تفعل اليوم من أجل ${name}.`,
     menuHint:
       'نصيحة: اضغط الجرس على اليمين في الأعلى للتنبيهات المدرسية. الشريط البنفسجي على اليسار يفتح اليومي واللوحة واللعب والمحادثة والتقارير وغيرها. لتسجيل الخروج استخدم الملف والأمان.',
+    profile: 'الملف',
+    profileA11y: 'الملف والأمان',
     alerts: 'تنبيهات',
     alertsA11y: (count: number) => (count > 0 ? `تنبيهات، ${count} غير مقروء` : 'تنبيهات'),
     childFallback: 'طفلك',
@@ -353,6 +359,8 @@ function buildTodayGuidance(params: {
 export function ParentMainOverviewScreen({ navigation }: Props) {
   const { token, user } = useAuth()
   const { language, setLanguage, isArabic } = useLanguage()
+  const { textScale, appColors, highContrast } = useDisplayComfort()
+  const s = useComfortAwareStyles(styles, textScale, appColors, highContrast)
   const copy = HOME_COPY[language]
   const [childrenCount, setChildrenCount] = useState<number>(0)
   const [latestReportScore, setLatestReportScore] = useState<number | null>(null)
@@ -647,10 +655,10 @@ export function ParentMainOverviewScreen({ navigation }: Props) {
   }, [firstChild?.id, newStepsCount, parentSteps])
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={s.safe}>
       <ScrollView
-        style={styles.homeContent}
-        contentContainerStyle={styles.wrap}
+        style={s.homeContent}
+        contentContainerStyle={s.wrap}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -665,85 +673,94 @@ export function ParentMainOverviewScreen({ navigation }: Props) {
                 }
               })()
             }}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
+            tintColor={appColors.primary}
+            colors={[appColors.primary]}
           />
         }
       >
-        <View style={styles.heroCard}>
-          <View pointerEvents="none" style={styles.heroGlowTop} />
-          <View pointerEvents="none" style={styles.heroGlowBottom} />
-          <View style={[styles.heroTopRow, { direction: 'ltr' }]}>
-            <View style={[styles.languageSwitchDark, styles.languageSwitchInHeroRow]}>
-              <Pressable style={[styles.langBtnDark, language === 'en' && styles.langBtnDarkActive]} onPress={() => void setLanguage('en')}>
-                <Text style={[styles.langTextDark, language === 'en' && styles.langTextDarkActive]}>English</Text>
+        <View style={s.heroCard}>
+          <View pointerEvents="none" style={s.heroGlowTop} />
+          <View pointerEvents="none" style={s.heroGlowBottom} />
+          <View style={[s.heroTopRow, { direction: 'ltr' }]}>
+            <View style={[s.languageSwitchDark, s.languageSwitchInHeroRow]}>
+              <Pressable style={[s.langBtnDark, language === 'en' && s.langBtnDarkActive]} onPress={() => void setLanguage('en')}>
+                <Text style={[s.langTextDark, language === 'en' && s.langTextDarkActive]}>English</Text>
               </Pressable>
-              <Pressable style={[styles.langBtnDark, language === 'ar' && styles.langBtnDarkActive]} onPress={() => void setLanguage('ar')}>
-                <Text style={[styles.langTextDark, language === 'ar' && styles.langTextDarkActive]}>العربية</Text>
+              <Pressable style={[s.langBtnDark, language === 'ar' && s.langBtnDarkActive]} onPress={() => void setLanguage('ar')}>
+                <Text style={[s.langTextDark, language === 'ar' && s.langTextDarkActive]}>العربية</Text>
               </Pressable>
             </View>
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel={copy.profileA11y}
+              style={s.heroProfileBtn}
+              onPress={() => navigation.navigate('ParentAccountProfile')}
+            >
+              <Text style={s.heroProfileIcon}>◎</Text>
+              <Text style={s.heroProfileLabel}>{copy.profile}</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
               accessibilityLabel={copy.alertsA11y(notificationsUnread)}
-              style={styles.heroAlertsBtn}
+              style={s.heroAlertsBtn}
               onPress={() => navigation.navigate('ParentNotifications')}
             >
-              <Text style={styles.heroAlertsIcon}>🔔</Text>
-              <Text style={styles.heroAlertsLabel}>{copy.alerts}</Text>
+              <Text style={s.heroAlertsIcon}>🔔</Text>
+              <Text style={s.heroAlertsLabel}>{copy.alerts}</Text>
               {notificationsUnread > 0 ? (
-                <View style={styles.heroAlertsBadge}>
-                  <Text style={styles.heroAlertsBadgeText}>{notificationsUnread > 99 ? '99+' : String(notificationsUnread)}</Text>
+                <View style={s.heroAlertsBadge}>
+                  <Text style={s.heroAlertsBadgeText}>{notificationsUnread > 99 ? '99+' : String(notificationsUnread)}</Text>
                 </View>
               ) : null}
             </Pressable>
           </View>
-          <Text style={[styles.heroEyebrow, isArabic && styles.rtlText]}>{copy.familyHome}</Text>
-          <Text style={[styles.heroTitle, isArabic && styles.rtlText]}>{copy.hello} {user?.name || copy.fallbackName}</Text>
-          <Text style={[styles.heroText, isArabic && styles.rtlText]}>{copy.intro(firstChild?.name || copy.childFallback)}</Text>
-          <Text style={[styles.heroHint, isArabic && styles.rtlText]}>{copy.menuHint}</Text>
+          <Text style={[s.heroEyebrow, isArabic && s.rtlText]}>{copy.familyHome}</Text>
+          <Text style={[s.heroTitle, isArabic && s.rtlText]}>{copy.hello} {user?.name || copy.fallbackName}</Text>
+          <Text style={[s.heroText, isArabic && s.rtlText]}>{copy.intro(firstChild?.name || copy.childFallback)}</Text>
+          <Text style={[s.heroHint, isArabic && s.rtlText]}>{copy.menuHint}</Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={copy.refresh}
             accessibilityState={{ busy: loading, disabled: loading }}
             disabled={loading}
-            style={[styles.refreshBtn, loading && styles.refreshBtnDisabled]}
+            style={[s.refreshBtn, loading && s.refreshBtnDisabled]}
             onPress={() => void loadHome()}
           >
-            <View style={styles.refreshContent}>
+            <View style={s.refreshContent}>
               {loading ? <ActivityIndicator color={colors.primaryDark} size="small" /> : null}
-              <Text style={styles.refreshBtnText}>{loading ? copy.refreshing : copy.refresh}</Text>
+              <Text style={s.refreshBtnText}>{loading ? copy.refreshing : copy.refresh}</Text>
             </View>
           </Pressable>
-          {lastUpdatedAt ? <Text style={[styles.lastUpdatedText, isArabic && styles.rtlText]}>{copy.lastUpdated(lastUpdatedAt)}</Text> : null}
+          {lastUpdatedAt ? <Text style={[s.lastUpdatedText, isArabic && s.rtlText]}>{copy.lastUpdated(lastUpdatedAt)}</Text> : null}
         </View>
 
-        <View style={styles.startHereCard}>
-          <View style={styles.startBadge}>
-            <Text style={styles.startBadgeText}>1</Text>
+        <View style={s.startHereCard}>
+          <View style={s.startBadge}>
+            <Text style={s.startBadgeText}>1</Text>
           </View>
-          <View style={styles.startCopy}>
-            <Text style={[styles.startTitle, isArabic && styles.rtlText]}>{copy.startHere}</Text>
-            <Text style={[styles.startText, isArabic && styles.rtlText]}>
+          <View style={s.startCopy}>
+            <Text style={[s.startTitle, isArabic && s.rtlText]}>{copy.startHere}</Text>
+            <Text style={[s.startText, isArabic && s.rtlText]}>
               {localizedNextTaskLabel ? copy.checklistNext(localizedNextTaskLabel) : copy.checklistAllDone}
             </Text>
           </View>
           {nextTask && firstChild ? (
-            <Pressable accessibilityRole="button" accessibilityLabel={localizedNextTaskLabel || copy.go} hitSlop={8} style={styles.startGoBtn} onPress={runNextAction}>
-              <Text style={styles.startGoText}>{copy.go}</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel={localizedNextTaskLabel || copy.go} hitSlop={8} style={s.startGoBtn} onPress={runNextAction}>
+              <Text style={s.startGoText}>{copy.go}</Text>
             </Pressable>
           ) : null}
         </View>
 
         {offlinePendingCount > 0 ? (
-          <View style={styles.offlinePendingCard}>
-            <Text style={[styles.offlinePendingTitle, isArabic && styles.rtlText]}>{copy.offlinePending(offlinePendingCount)}</Text>
-            <Text style={[styles.offlinePendingText, isArabic && styles.rtlText]}>{copy.offlineHint}</Text>
+          <View style={s.offlinePendingCard}>
+            <Text style={[s.offlinePendingTitle, isArabic && s.rtlText]}>{copy.offlinePending(offlinePendingCount)}</Text>
+            <Text style={[s.offlinePendingText, isArabic && s.rtlText]}>{copy.offlineHint}</Text>
           </View>
         ) : null}
 
         {showOfflineSyncedToast ? (
-          <View style={styles.offlineSyncedToast}>
-            <Text style={[styles.offlineSyncedToastText, isArabic && styles.rtlText]}>{copy.offlineSyncedToast}</Text>
+          <View style={s.offlineSyncedToast}>
+            <Text style={[s.offlineSyncedToastText, isArabic && s.rtlText]}>{copy.offlineSyncedToast}</Text>
           </View>
         ) : null}
 
@@ -761,179 +778,179 @@ export function ParentMainOverviewScreen({ navigation }: Props) {
         ) : null}
 
         {showTipsCard ? (
-          <View style={styles.tipsCard}>
-            <Text style={[styles.tipsTitle, isArabic && styles.rtlText]}>{copy.tipsTitle}</Text>
-            <Text style={[styles.tipsLine, isArabic && styles.rtlText]}>{copy.tipsLine1}</Text>
-            <Text style={[styles.tipsLine, isArabic && styles.rtlText]}>{copy.tipsLine2}</Text>
-            <Text style={[styles.tipsLine, isArabic && styles.rtlText]}>{copy.tipsLine3}</Text>
+          <View style={s.tipsCard}>
+            <Text style={[s.tipsTitle, isArabic && s.rtlText]}>{copy.tipsTitle}</Text>
+            <Text style={[s.tipsLine, isArabic && s.rtlText]}>{copy.tipsLine1}</Text>
+            <Text style={[s.tipsLine, isArabic && s.rtlText]}>{copy.tipsLine2}</Text>
+            <Text style={[s.tipsLine, isArabic && s.rtlText]}>{copy.tipsLine3}</Text>
             <Pressable
-              style={styles.tipsHideBtn}
+              style={s.tipsHideBtn}
               onPress={() => {
                 const key = `${HOME_TIPS_SEEN_PREFIX}:${user?.id || 'unknown'}`
                 setShowTipsCard(false)
                 void AsyncStorage.setItem(key, '1')
               }}
             >
-              <Text style={styles.tipsHideBtnText}>{copy.tipsHide}</Text>
+              <Text style={s.tipsHideBtnText}>{copy.tipsHide}</Text>
             </Pressable>
           </View>
         ) : null}
 
-        <View style={styles.announcementsCard}>
-          <View style={styles.cardTitleRow}>
-            <Text style={[styles.sectionLabel, isArabic && styles.rtlText]}>{copy.announcementsTitle}</Text>
-            <Text style={[styles.announcementLiveBadge, announcementsFromCache && styles.announcementCachedBadge]}>
+        <View style={s.announcementsCard}>
+          <View style={s.cardTitleRow}>
+            <Text style={[s.sectionLabel, isArabic && s.rtlText]}>{copy.announcementsTitle}</Text>
+            <Text style={[s.announcementLiveBadge, announcementsFromCache && s.announcementCachedBadge]}>
               {announcementsFromCache ? copy.announcementsCachedBadge : copy.announcementsBadge}
             </Text>
           </View>
           {announcementsFromCache ? (
-            <Text style={[styles.announcementCacheHint, isArabic && styles.rtlText]}>{copy.announcementsCachedHint}</Text>
+            <Text style={[s.announcementCacheHint, isArabic && s.rtlText]}>{copy.announcementsCachedHint}</Text>
           ) : null}
           {latestAnnouncements.length > 0 ? (
             latestAnnouncements.map((item) => (
-              <View key={item.id} style={styles.announcementItem}>
-                <View style={styles.announcementTitleRow}>
-                  <Text style={[styles.announcementTitle, isArabic && styles.rtlText]}>{item.title}</Text>
-                  {item.priority ? <Text style={styles.announcementPriority}>{item.priority}</Text> : null}
+              <View key={item.id} style={s.announcementItem}>
+                <View style={s.announcementTitleRow}>
+                  <Text style={[s.announcementTitle, isArabic && s.rtlText]}>{item.title}</Text>
+                  {item.priority ? <Text style={s.announcementPriority}>{item.priority}</Text> : null}
                 </View>
-                <Text style={[styles.announcementBody, isArabic && styles.rtlText]} numberOfLines={3}>
+                <Text style={[s.announcementBody, isArabic && s.rtlText]} numberOfLines={3}>
                   {item.body}
                 </Text>
-                <Text style={[styles.announcementDate, isArabic && styles.rtlText]}>{new Date(item.createdAt).toLocaleString()}</Text>
+                <Text style={[s.announcementDate, isArabic && s.rtlText]}>{new Date(item.createdAt).toLocaleString()}</Text>
               </View>
             ))
           ) : (
-            <Text style={[styles.announcementBody, isArabic && styles.rtlText]}>{copy.announcementsEmpty}</Text>
+            <Text style={[s.announcementBody, isArabic && s.rtlText]}>{copy.announcementsEmpty}</Text>
           )}
         </View>
 
-        <View style={styles.teacherStepsCard}>
-          <View style={styles.cardTitleRow}>
-            <Text style={[styles.sectionLabel, isArabic && styles.rtlText]}>{copy.teacherStepsTitle}</Text>
-            <Text style={styles.cardMiniBadge}>{copy.teacherStepsBadge(newStepsCount)}</Text>
+        <View style={s.teacherStepsCard}>
+          <View style={s.cardTitleRow}>
+            <Text style={[s.sectionLabel, isArabic && s.rtlText]}>{copy.teacherStepsTitle}</Text>
+            <Text style={s.cardMiniBadge}>{copy.teacherStepsBadge(newStepsCount)}</Text>
           </View>
           {parentSteps.length > 0 ? (
             parentSteps.slice(0, 3).map((step) => (
-              <View key={step.id} style={styles.teacherStepItem}>
-                <Text style={[styles.teacherStepTitle, isArabic && styles.rtlText]}>{step.title}</Text>
-                <Text style={[styles.teacherStepBody, isArabic && styles.rtlText]} numberOfLines={2}>
+              <View key={step.id} style={s.teacherStepItem}>
+                <Text style={[s.teacherStepTitle, isArabic && s.rtlText]}>{step.title}</Text>
+                <Text style={[s.teacherStepBody, isArabic && s.rtlText]} numberOfLines={2}>
                   {step.body}
                 </Text>
               </View>
             ))
           ) : (
-            <Text style={[styles.teacherStepBody, isArabic && styles.rtlText]}>{copy.teacherStepsEmpty}</Text>
+            <Text style={[s.teacherStepBody, isArabic && s.rtlText]}>{copy.teacherStepsEmpty}</Text>
           )}
         </View>
 
-        <View style={styles.simpleSummaryCard}>
-          <View style={styles.cardTitleRow}>
-            <Text style={[styles.sectionLabel, isArabic && styles.rtlText]}>{copy.quickView}</Text>
-            <Text style={styles.cardMiniBadge}>{copy.today}</Text>
+        <View style={s.simpleSummaryCard}>
+          <View style={s.cardTitleRow}>
+            <Text style={[s.sectionLabel, isArabic && s.rtlText]}>{copy.quickView}</Text>
+            <Text style={s.cardMiniBadge}>{copy.today}</Text>
           </View>
-          <View style={styles.summaryGrid}>
-            <View style={[styles.summaryBox, styles.summaryBoxPurple]}>
-              <Text style={styles.summaryNumber}>{childrenCount}</Text>
-              <Text style={styles.summaryLabel}>{copy.children}</Text>
+          <View style={s.summaryGrid}>
+            <View style={[s.summaryBox, s.summaryBoxPurple]}>
+              <Text style={s.summaryNumber}>{childrenCount}</Text>
+              <Text style={s.summaryLabel}>{copy.children}</Text>
             </View>
-            <View style={[styles.summaryBox, styles.summaryBoxTeal]}>
-              <Text style={styles.summaryNumber}>{latestReportScore ?? '-'}</Text>
-              <Text style={styles.summaryLabel}>{copy.lastReport}</Text>
+            <View style={[s.summaryBox, s.summaryBoxTeal]}>
+              <Text style={s.summaryNumber}>{latestReportScore ?? '-'}</Text>
+              <Text style={s.summaryLabel}>{copy.lastReport}</Text>
             </View>
-            <View style={[styles.summaryBox, styles.summaryBoxBlue]}>
-              <Text style={styles.summaryNumber}>{chatUnread}</Text>
-              <Text style={styles.summaryLabel}>{copy.newMessages}</Text>
+            <View style={[s.summaryBox, s.summaryBoxBlue]}>
+              <Text style={s.summaryNumber}>{chatUnread}</Text>
+              <Text style={s.summaryLabel}>{copy.newMessages}</Text>
             </View>
-            <View style={[styles.summaryBox, styles.summaryBoxGold]}>
-              <Text style={styles.summaryNumber}>{starsToday}</Text>
-              <Text style={styles.summaryLabel}>{copy.stars}</Text>
+            <View style={[s.summaryBox, s.summaryBoxGold]}>
+              <Text style={s.summaryNumber}>{starsToday}</Text>
+              <Text style={s.summaryLabel}>{copy.stars}</Text>
             </View>
           </View>
-          <Text style={[styles.simpleLine, isArabic && styles.rtlText]}>{copy.selectedChild}: {firstChild?.name || copy.noChild}</Text>
-          <Text style={[styles.simpleLine, isArabic && styles.rtlText]}>{copy.progress}: {progressHealth(recentAverage, language)}</Text>
-          <Text style={[styles.simpleLine, isArabic && styles.rtlText]}>{copy.feeling}: {todayEmotion?.label || copy.noFeeling}</Text>
+          <Text style={[s.simpleLine, isArabic && s.rtlText]}>{copy.selectedChild}: {firstChild?.name || copy.noChild}</Text>
+          <Text style={[s.simpleLine, isArabic && s.rtlText]}>{copy.progress}: {progressHealth(recentAverage, language)}</Text>
+          <Text style={[s.simpleLine, isArabic && s.rtlText]}>{copy.feeling}: {todayEmotion?.label || copy.noFeeling}</Text>
         </View>
 
-        <View style={styles.weekSummaryCard}>
-          <View style={styles.cardTitleRow}>
-            <Text style={[styles.sectionLabel, isArabic && styles.rtlText]}>{copy.weekAtGlance}</Text>
-            <Text style={styles.cardMiniBadge}>{progressTrendLabel(progressTrend, language)}</Text>
+        <View style={s.weekSummaryCard}>
+          <View style={s.cardTitleRow}>
+            <Text style={[s.sectionLabel, isArabic && s.rtlText]}>{copy.weekAtGlance}</Text>
+            <Text style={s.cardMiniBadge}>{progressTrendLabel(progressTrend, language)}</Text>
           </View>
-          <View style={styles.weekSummaryGrid}>
-            <View style={[styles.summaryBox, styles.summaryBoxTeal]}>
-              <Text style={styles.summaryNumber}>{weekAverageScore ?? '-'}</Text>
-              <Text style={styles.summaryLabel}>{copy.weekAverage}</Text>
+          <View style={s.weekSummaryGrid}>
+            <View style={[s.summaryBox, s.summaryBoxTeal]}>
+              <Text style={s.summaryNumber}>{weekAverageScore ?? '-'}</Text>
+              <Text style={s.summaryLabel}>{copy.weekAverage}</Text>
             </View>
-            <View style={[styles.summaryBox, styles.summaryBoxPurple]}>
-              <Text style={styles.summaryNumber}>{weekActivityCount}</Text>
-              <Text style={styles.summaryLabel}>{copy.weekActivities}</Text>
+            <View style={[s.summaryBox, s.summaryBoxPurple]}>
+              <Text style={s.summaryNumber}>{weekActivityCount}</Text>
+              <Text style={s.summaryLabel}>{copy.weekActivities}</Text>
             </View>
           </View>
-          <Text style={[styles.weekTrendText, isArabic && styles.rtlText]}>
+          <Text style={[s.weekTrendText, isArabic && s.rtlText]}>
             {copy.weekTrend}: {progressTrendLabel(progressTrend, language)}
           </Text>
-          <View style={styles.weekNoteBox}>
-            <Text style={[styles.weekNoteLabel, isArabic && styles.rtlText]}>{copy.weekLatestNote}</Text>
-            <Text style={[styles.weekNoteText, isArabic && styles.rtlText]} numberOfLines={3}>
+          <View style={s.weekNoteBox}>
+            <Text style={[s.weekNoteLabel, isArabic && s.rtlText]}>{copy.weekLatestNote}</Text>
+            <Text style={[s.weekNoteText, isArabic && s.rtlText]} numberOfLines={3}>
               {latestReportNote || (progressTrend === 'noData' ? copy.weekNoData : copy.weekNoNote)}
             </Text>
           </View>
           {firstChild ? (
             <Pressable
-              style={styles.weekProgressBtn}
+              style={s.weekProgressBtn}
               onPress={() => navigation.navigate('ParentProgressReports', { childId: firstChild.id, childName: firstChild.name })}
             >
-              <Text style={styles.weekProgressBtnText}>{copy.weekViewReports}</Text>
+              <Text style={s.weekProgressBtnText}>{copy.weekViewReports}</Text>
             </Pressable>
           ) : null}
         </View>
 
-        <View style={styles.todayCard}>
-          <View pointerEvents="none" style={styles.todayGlow} />
-          <Text style={[styles.sectionLabel, isArabic && styles.rtlText]}>{copy.today}</Text>
-          <Text style={[styles.todayText, isArabic && styles.rtlText]}>{todayGuidance}</Text>
+        <View style={s.todayCard}>
+          <View pointerEvents="none" style={s.todayGlow} />
+          <Text style={[s.sectionLabel, isArabic && s.rtlText]}>{copy.today}</Text>
+          <Text style={[s.todayText, isArabic && s.rtlText]}>{todayGuidance}</Text>
           {nextTask && firstChild ? (
-            <Pressable style={styles.primaryActionBtn} onPress={runNextAction}>
-              <Text style={styles.primaryActionText}>{copy.startHere}: {localizedNextTaskLabel}</Text>
+            <Pressable style={s.primaryActionBtn} onPress={runNextAction}>
+              <Text style={s.primaryActionText}>{copy.startHere}: {localizedNextTaskLabel}</Text>
             </Pressable>
           ) : null}
         </View>
 
-        <View style={styles.todoCard}>
-          <Text style={[styles.todoTitle, isArabic && styles.rtlText]}>{copy.checklistTitle}</Text>
-          <Text style={[styles.todoSub, isArabic && styles.rtlText]}>{copy.checklistDone(completedTasks, dailyTasks.length)}</Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${checklistPercent}%` }]} />
+        <View style={s.todoCard}>
+          <Text style={[s.todoTitle, isArabic && s.rtlText]}>{copy.checklistTitle}</Text>
+          <Text style={[s.todoSub, isArabic && s.rtlText]}>{copy.checklistDone(completedTasks, dailyTasks.length)}</Text>
+          <View style={s.progressTrack}>
+            <View style={[s.progressFill, { width: `${checklistPercent}%` }]} />
           </View>
-          <View style={styles.taskList}>
+          <View style={s.taskList}>
             {dailyTasks.map((task) => (
-              <View key={task.id} style={styles.taskRow}>
-                <Text style={[styles.taskDot, task.done && styles.taskDotDone]}>{task.done ? '✓' : '•'}</Text>
-                <Text style={[styles.taskLabel, task.done && styles.taskLabelDone, isArabic && styles.rtlText]}>
+              <View key={task.id} style={s.taskRow}>
+                <Text style={[s.taskDot, task.done && s.taskDotDone]}>{task.done ? '✓' : '•'}</Text>
+                <Text style={[s.taskLabel, task.done && s.taskLabelDone, isArabic && s.rtlText]}>
                   {localizeTaskLabel(task, language)}
                 </Text>
               </View>
             ))}
           </View>
           {nextTask ? (
-            <Pressable accessibilityRole="button" accessibilityLabel={localizedNextTaskLabel || nextTask.label} style={styles.nextActionBtn} onPress={runNextAction}>
-              <Text style={[styles.nextActionText, isArabic && styles.rtlText]}>{copy.checklistNext(localizedNextTaskLabel || nextTask.label)}</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel={localizedNextTaskLabel || nextTask.label} style={s.nextActionBtn} onPress={runNextAction}>
+              <Text style={[s.nextActionText, isArabic && s.rtlText]}>{copy.checklistNext(localizedNextTaskLabel || nextTask.label)}</Text>
             </Pressable>
           ) : (
-            <View style={styles.doneBadge}>
-              <Text style={[styles.doneBadgeText, isArabic && styles.rtlText]}>{copy.checklistAllDone}</Text>
+            <View style={s.doneBadge}>
+              <Text style={[s.doneBadgeText, isArabic && s.rtlText]}>{copy.checklistAllDone}</Text>
             </View>
           )}
         </View>
 
-        <View style={styles.moreSection}>
-          <Text style={[styles.sectionLabel, isArabic && styles.rtlText]}>{copy.moreHelp}</Text>
-          <View style={styles.quickRow}>
-            <Pressable style={styles.quickBtn} onPress={() => navigation.navigate('ParentWeeklySummary')}>
-              <Text style={styles.quickBtnText}>{copy.weeklySummary}</Text>
+        <View style={s.moreSection}>
+          <Text style={[s.sectionLabel, isArabic && s.rtlText]}>{copy.moreHelp}</Text>
+          <View style={s.quickRow}>
+            <Pressable style={s.quickBtn} onPress={() => navigation.navigate('ParentWeeklySummary')}>
+              <Text style={s.quickBtnText}>{copy.weeklySummary}</Text>
             </Pressable>
             <Pressable
-              style={styles.quickBtn}
+              style={s.quickBtn}
               onPress={() => {
                 if (!firstChild) {
                   Alert.alert(copy.noStudentTitle, copy.noChildCalendar)
@@ -942,12 +959,12 @@ export function ParentMainOverviewScreen({ navigation }: Props) {
                 navigation.navigate('ParentCalendar', { childId: firstChild.id, childName: firstChild.name })
               }}
             >
-              <Text style={styles.quickBtnText}>{copy.calendar}</Text>
+              <Text style={s.quickBtnText}>{copy.calendar}</Text>
             </Pressable>
           </View>
-          <View style={styles.quickRow}>
+          <View style={s.quickRow}>
             <Pressable
-              style={styles.quickBtn}
+              style={s.quickBtn}
               onPress={() => {
                 if (!firstChild) {
                   Alert.alert(copy.noStudentTitle, copy.noChildDownloads)
@@ -956,10 +973,10 @@ export function ParentMainOverviewScreen({ navigation }: Props) {
                 navigation.navigate('ParentDownloads', { childId: firstChild.id, childName: firstChild.name })
               }}
             >
-              <Text style={styles.quickBtnText}>{copy.download}</Text>
+              <Text style={s.quickBtnText}>{copy.download}</Text>
             </Pressable>
             <Pressable
-              style={styles.quickBtn}
+              style={s.quickBtn}
               onPress={() => {
                 if (!firstChild) {
                   Alert.alert(copy.noStudentTitle, copy.noChildAdmin)
@@ -968,22 +985,22 @@ export function ParentMainOverviewScreen({ navigation }: Props) {
                 navigation.navigate('ParentAdminSupport', { childId: firstChild.id, childName: firstChild.name })
               }}
             >
-              <Text style={styles.quickBtnText}>{copy.admin}</Text>
+              <Text style={s.quickBtnText}>{copy.admin}</Text>
             </Pressable>
           </View>
-          <Pressable style={styles.sheetBtn} onPress={() => navigation.navigate('ParentMenuHelp')}>
-            <Text style={styles.sheetBtnText}>{copy.menuGuideBtn}</Text>
+          <Pressable style={s.sheetBtn} onPress={() => navigation.navigate('ParentMenuHelp')}>
+            <Text style={s.sheetBtnText}>{copy.menuGuideBtn}</Text>
           </Pressable>
-          <Pressable style={[styles.urgentBtn, urgentSending && styles.urgentBtnDisabled]} disabled={urgentSending} onPress={() => void sendUrgentHelp()}>
-            <Text style={styles.urgentBtnText}>{urgentSending ? copy.urgentSending : copy.urgentSend}</Text>
+          <Pressable style={[s.urgentBtn, urgentSending && s.urgentBtnDisabled]} disabled={urgentSending} onPress={() => void sendUrgentHelp()}>
+            <Text style={s.urgentBtnText}>{urgentSending ? copy.urgentSending : copy.urgentSend}</Text>
           </Pressable>
         </View>
 
-        <View style={styles.quickBarWrap}>
+        <View style={s.quickBarWrap}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={copy.quickBarDaily}
-            style={styles.quickBarBtn}
+            style={s.quickBarBtn}
             onPress={() => {
               if (!firstChild) {
                 Alert.alert(copy.noStudentTitle, copy.noChildCheckin)
@@ -992,13 +1009,13 @@ export function ParentMainOverviewScreen({ navigation }: Props) {
               navigation.navigate('ParentDailyCheckIn', { childId: firstChild.id, childName: firstChild.name })
             }}
           >
-            <Text style={styles.quickBarIcon}>✓</Text>
-            <Text style={[styles.quickBarText, isArabic && styles.rtlText]}>{copy.quickBarDaily}</Text>
+            <Text style={s.quickBarIcon}>✓</Text>
+            <Text style={[s.quickBarText, isArabic && s.rtlText]}>{copy.quickBarDaily}</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={copy.quickBarChat}
-            style={styles.quickBarBtn}
+            style={s.quickBarBtn}
             onPress={() => {
               if (!firstChild) {
                 Alert.alert(copy.noStudentTitle, copy.noChildAdmin)
@@ -1007,30 +1024,30 @@ export function ParentMainOverviewScreen({ navigation }: Props) {
               navigation.navigate('ParentChat', { childId: firstChild.id, childName: firstChild.name })
             }}
           >
-            <Text style={styles.quickBarIcon}>✉</Text>
-            <Text style={[styles.quickBarText, isArabic && styles.rtlText]}>{copy.quickBarChat}</Text>
+            <Text style={s.quickBarIcon}>✉</Text>
+            <Text style={[s.quickBarText, isArabic && s.rtlText]}>{copy.quickBarChat}</Text>
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={copy.quickBarHelp} style={styles.quickBarBtn} onPress={() => navigation.navigate('ParentMenuHelp')}>
-            <Text style={styles.quickBarIcon}>?</Text>
-            <Text style={[styles.quickBarText, isArabic && styles.rtlText]}>{copy.quickBarHelp}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={copy.quickBarHelp} style={s.quickBarBtn} onPress={() => navigation.navigate('ParentMenuHelp')}>
+            <Text style={s.quickBarIcon}>?</Text>
+            <Text style={[s.quickBarText, isArabic && s.rtlText]}>{copy.quickBarHelp}</Text>
           </Pressable>
         </View>
 
         </ScrollView>
 
       <Modal visible={showWhatsNewModal} transparent animationType="fade" onRequestClose={() => setShowWhatsNewModal(false)}>
-        <View style={styles.whatsNewOverlay}>
-          <View style={styles.whatsNewCard}>
-            <Text style={[styles.whatsNewTitle, isArabic && styles.rtlText]}>{copy.whatsNewTitle}</Text>
-            <Text style={[styles.whatsNewBody, isArabic && styles.rtlText]}>{copy.whatsNewBody}</Text>
+        <View style={s.whatsNewOverlay}>
+          <View style={s.whatsNewCard}>
+            <Text style={[s.whatsNewTitle, isArabic && s.rtlText]}>{copy.whatsNewTitle}</Text>
+            <Text style={[s.whatsNewBody, isArabic && s.rtlText]}>{copy.whatsNewBody}</Text>
             <Pressable
-              style={styles.whatsNewOkBtn}
+              style={s.whatsNewOkBtn}
               onPress={() => {
                 setShowWhatsNewModal(false)
                 void AsyncStorage.setItem(whatsNewSeenKey, '1')
               }}
             >
-              <Text style={styles.whatsNewOkBtnText}>{copy.ok}</Text>
+              <Text style={s.whatsNewOkBtnText}>{copy.ok}</Text>
             </Pressable>
           </View>
         </View>
@@ -1041,18 +1058,18 @@ export function ParentMainOverviewScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f7f2ff' },
+  safe: { flex: 1, backgroundColor: '#f2eff9' },
   homeContent: { flex: 1 },
   wrap: { padding: 16, gap: 12, paddingBottom: 34 },
   heroCard: {
-    backgroundColor: '#2c1b57',
+    backgroundColor: '#211a2e',
     borderRadius: 30,
     padding: 20,
     gap: 8,
     borderWidth: 1,
     borderColor: '#4f3b86',
     overflow: 'hidden',
-    shadowColor: '#2c1b57',
+    shadowColor: '#211a2e',
     shadowOpacity: 0.22,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
@@ -1079,6 +1096,21 @@ const styles = StyleSheet.create({
   heroTopRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   languageSwitchDark: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', padding: 4, gap: 4 },
   languageSwitchInHeroRow: { flex: 1, minWidth: 0 },
+  heroProfileBtn: {
+    minWidth: 56,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 0,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+  },
+  heroProfileIcon: { fontSize: 18, color: '#fff', fontWeight: '900' },
+  heroProfileLabel: { color: '#ddd6fe', fontSize: 8, fontWeight: '900', textAlign: 'center' },
   heroAlertsBtn: {
     minWidth: 56,
     minHeight: 48,
@@ -1123,7 +1155,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#e5dcfb',
+    borderColor: '#dfd6ee',
     padding: 14,
     shadowColor: '#2d195a',
     shadowOpacity: 0.1,
@@ -1135,21 +1167,21 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 16,
-    backgroundColor: '#7c4dff',
+    backgroundColor: '#6d46d4',
     alignItems: 'center',
     justifyContent: 'center',
   },
   startBadgeText: { color: '#fff', fontSize: 20, fontWeight: '900' },
   startCopy: { flex: 1, gap: 3 },
-  startTitle: { color: '#24173f', fontSize: 16, fontWeight: '900' },
+  startTitle: { color: '#17131f', fontSize: 16, fontWeight: '900' },
   startText: { color: '#6d6485', lineHeight: 20, fontWeight: '700' },
-  startGoBtn: { backgroundColor: '#f1eaff', borderRadius: 999, paddingVertical: 9, paddingHorizontal: 14 },
-  startGoText: { color: '#6b3df0', fontWeight: '900' },
+  startGoBtn: { backgroundColor: '#f4f1fb', borderRadius: 999, paddingVertical: 9, paddingHorizontal: 14 },
+  startGoText: { color: '#6d46d4', fontWeight: '900' },
   todayCard: {
     backgroundColor: '#fff',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#e4d9ff',
+    borderColor: '#dfd6ee',
     padding: 17,
     gap: 10,
     overflow: 'hidden',
@@ -1179,15 +1211,15 @@ const styles = StyleSheet.create({
   urgentBtn: { backgroundColor: '#dc2626', borderRadius: 12, padding: 12, alignItems: 'center' },
   urgentBtnDisabled: { opacity: 0.6 },
   urgentBtnText: { color: '#fff', fontWeight: '800', textAlign: 'center' },
-  sectionLabel: { color: '#2c2144', fontSize: 19, fontWeight: '900' },
+  sectionLabel: { color: '#17131f', fontSize: 19, fontWeight: '900' },
   todayText: { color: '#3b3150', fontSize: 16, fontWeight: '700', lineHeight: 23 },
-  primaryActionBtn: { backgroundColor: '#7c4dff', borderRadius: 16, padding: 14, alignItems: 'center' },
+  primaryActionBtn: { backgroundColor: '#6d46d4', borderRadius: 16, padding: 14, alignItems: 'center' },
   primaryActionText: { color: '#fff', fontSize: 16, fontWeight: '800', textAlign: 'center' },
   simpleSummaryCard: {
     backgroundColor: '#fff',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#e5dcfb',
+    borderColor: '#dfd6ee',
     padding: 15,
     gap: 11,
     shadowColor: '#2d195a',
@@ -1198,8 +1230,8 @@ const styles = StyleSheet.create({
   },
   cardTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   cardMiniBadge: {
-    backgroundColor: '#f1eaff',
-    color: '#6b3df0',
+    backgroundColor: '#f4f1fb',
+    color: '#6d46d4',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -1208,14 +1240,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   summaryGrid: { flexDirection: 'row', gap: 8 },
-  summaryBox: { flex: 1, backgroundColor: '#faf7ff', borderRadius: 16, borderWidth: 1, borderColor: '#ece4ff', padding: 10 },
-  summaryBoxPurple: { backgroundColor: '#faf7ff' },
+  summaryBox: { flex: 1, backgroundColor: '#faf8ff', borderRadius: 16, borderWidth: 1, borderColor: '#ece4ff', padding: 10 },
+  summaryBoxPurple: { backgroundColor: '#faf8ff' },
   summaryBoxTeal: { backgroundColor: '#effcf8', borderColor: '#ccfbf1' },
   summaryBoxBlue: { backgroundColor: '#eff6ff', borderColor: '#dbeafe' },
   summaryBoxGold: { backgroundColor: '#fffbeb', borderColor: '#fde68a' },
-  summaryNumber: { color: '#6b3df0', fontSize: 22, fontWeight: '900', textAlign: 'center' },
+  summaryNumber: { color: '#6d46d4', fontSize: 22, fontWeight: '900', textAlign: 'center' },
   summaryLabel: { color: '#6d6485', fontSize: 11, fontWeight: '700', textAlign: 'center', marginTop: 2 },
-  simpleLine: { color: '#5f5573', lineHeight: 20 },
+  simpleLine: { color: '#534c62', lineHeight: 20 },
   weekSummaryCard: {
     backgroundColor: '#fff',
     borderRadius: 24,
@@ -1240,14 +1272,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   weekNoteLabel: { color: '#1e3a8a', fontSize: 12, fontWeight: '900', textTransform: 'uppercase' },
-  weekNoteText: { color: '#5f5573', lineHeight: 20, fontWeight: '600' },
+  weekNoteText: { color: '#534c62', lineHeight: 20, fontWeight: '600' },
   weekProgressBtn: { backgroundColor: '#eff6ff', borderRadius: 14, borderWidth: 1, borderColor: '#bfdbfe', padding: 11 },
   weekProgressBtnText: { color: '#1d4ed8', fontWeight: '900', textAlign: 'center' },
   announcementsCard: {
     backgroundColor: '#fff',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#e5dcfb',
+    borderColor: '#dfd6ee',
     padding: 15,
     gap: 10,
     shadowColor: '#2d195a',
@@ -1267,7 +1299,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   announcementItem: {
-    backgroundColor: '#faf7ff',
+    backgroundColor: '#faf8ff',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#ece4ff',
@@ -1275,7 +1307,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   announcementTitleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
-  announcementTitle: { flex: 1, color: '#2c2144', fontWeight: '900', fontSize: 15 },
+  announcementTitle: { flex: 1, color: '#17131f', fontWeight: '900', fontSize: 15 },
   announcementPriority: {
     color: '#7c2d12',
     backgroundColor: '#ffedd5',
@@ -1287,7 +1319,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     textTransform: 'uppercase',
   },
-  announcementBody: { color: '#5f5573', lineHeight: 20, fontWeight: '600' },
+  announcementBody: { color: '#534c62', lineHeight: 20, fontWeight: '600' },
   announcementDate: { color: '#7c7392', fontSize: 11, fontWeight: '700' },
   announcementCachedBadge: { backgroundColor: '#fffbeb', color: '#92400e' },
   announcementCacheHint: { color: '#92400e', lineHeight: 19, fontWeight: '700', fontSize: 12 },
@@ -1322,7 +1354,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#e5dcfb',
+    borderColor: '#dfd6ee',
     padding: 15,
     gap: 10,
     shadowColor: '#2d195a',
@@ -1332,15 +1364,15 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   quickRow: { flexDirection: 'row', gap: 8 },
-  quickBtn: { flex: 1, backgroundColor: '#faf7ff', borderRadius: 16, borderWidth: 1, borderColor: '#e1d6ff', padding: 12 },
+  quickBtn: { flex: 1, backgroundColor: '#faf8ff', borderRadius: 16, borderWidth: 1, borderColor: '#dfd6ee', padding: 12 },
   quickBtnText: { color: '#5f3dc9', fontWeight: '700', textAlign: 'center', fontSize: 12 },
-  sheetBtn: { backgroundColor: '#faf7ff', borderRadius: 16, borderWidth: 1, borderColor: '#e1d6ff', padding: 12 },
+  sheetBtn: { backgroundColor: '#faf8ff', borderRadius: 16, borderWidth: 1, borderColor: '#dfd6ee', padding: 12 },
   sheetBtnText: { color: '#5f3dc9', fontWeight: '700', textAlign: 'center' },
   todoCard: {
     backgroundColor: '#fff',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#e5dcfb',
+    borderColor: '#dfd6ee',
     padding: 15,
     gap: 8,
     shadowColor: '#2d195a',
@@ -1349,17 +1381,17 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 3,
   },
-  todoTitle: { color: '#2c2144', fontWeight: '900', fontSize: 16 },
+  todoTitle: { color: '#17131f', fontWeight: '900', fontSize: 16 },
   todoSub: { color: '#6d6485', fontSize: 12 },
   progressTrack: { height: 10, backgroundColor: '#ece4ff', borderRadius: 999, overflow: 'hidden', borderWidth: 1, borderColor: '#e3d9fb' },
-  progressFill: { height: '100%', backgroundColor: '#7c4dff' },
+  progressFill: { height: '100%', backgroundColor: '#6d46d4' },
   taskList: { gap: 7, marginTop: 2 },
   taskRow: {
     minHeight: 34,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 9,
-    backgroundColor: '#faf7ff',
+    backgroundColor: '#faf8ff',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#ece4ff',
@@ -1371,8 +1403,8 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     overflow: 'hidden',
-    backgroundColor: '#f1eaff',
-    color: '#6b3df0',
+    backgroundColor: '#f4f1fb',
+    color: '#6d46d4',
     fontWeight: '900',
     textAlign: 'center',
     lineHeight: 22,
@@ -1380,14 +1412,14 @@ const styles = StyleSheet.create({
   taskDotDone: { backgroundColor: '#dcfce7', color: '#15803d' },
   taskLabel: { flex: 1, color: '#3b3150', fontWeight: '800', lineHeight: 18 },
   taskLabelDone: { color: '#64748b', textDecorationLine: 'line-through' },
-  nextActionBtn: { backgroundColor: '#f1eaff', borderRadius: 14, padding: 11 },
-  nextActionText: { color: '#6b3df0', fontWeight: '800', textAlign: 'center', fontSize: 12 },
+  nextActionBtn: { backgroundColor: '#f4f1fb', borderRadius: 14, padding: 11 },
+  nextActionText: { color: '#6d46d4', fontWeight: '800', textAlign: 'center', fontSize: 12 },
   doneBadge: { backgroundColor: '#eefcf3', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#b7ebc7' },
   doneBadgeText: { color: '#146c2e', fontWeight: '700', textAlign: 'center', fontSize: 12 },
-  refreshBtn: { marginTop: -2, marginBottom: 2, backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#e1d6ff', padding: 10 },
+  refreshBtn: { marginTop: -2, marginBottom: 2, backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#dfd6ee', padding: 10 },
   refreshBtnDisabled: { opacity: 0.72 },
   refreshContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  refreshBtnText: { color: '#6b3df0', fontWeight: '800', textAlign: 'center' },
+  refreshBtnText: { color: '#6d46d4', fontWeight: '800', textAlign: 'center' },
   lastUpdatedText: { color: '#ddd6fe', fontSize: 12, fontWeight: '700', marginTop: 2 },
   tipsCard: {
     backgroundColor: '#eef6ff',
@@ -1418,7 +1450,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: '#e5dcfb',
+    borderColor: '#dfd6ee',
     padding: 8,
     shadowColor: '#2d195a',
     shadowOpacity: 0.12,
@@ -1429,16 +1461,16 @@ const styles = StyleSheet.create({
   quickBarBtn: {
     flex: 1,
     borderRadius: 16,
-    backgroundColor: '#f6f1ff',
+    backgroundColor: '#f4f1fb',
     borderWidth: 1,
-    borderColor: '#e1d6ff',
+    borderColor: '#dfd6ee',
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
   },
-  quickBarIcon: { color: '#6b3df0', fontWeight: '900', fontSize: 15 },
-  quickBarText: { color: '#6b3df0', fontWeight: '800', fontSize: 12 },
+  quickBarIcon: { color: '#6d46d4', fontWeight: '900', fontSize: 15 },
+  quickBarText: { color: '#6d46d4', fontWeight: '800', fontSize: 12 },
   whatsNewOverlay: {
     flex: 1,
     backgroundColor: 'rgba(22, 14, 41, 0.58)',
@@ -1449,16 +1481,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#e5dcfb',
+    borderColor: '#dfd6ee',
     padding: 18,
     gap: 10,
   },
-  whatsNewTitle: { color: '#24173f', fontSize: 21, fontWeight: '900' },
-  whatsNewBody: { color: '#5f5573', lineHeight: 22, fontWeight: '600' },
+  whatsNewTitle: { color: '#17131f', fontSize: 21, fontWeight: '900' },
+  whatsNewBody: { color: '#534c62', lineHeight: 22, fontWeight: '600' },
   whatsNewOkBtn: {
     marginTop: 6,
     borderRadius: 14,
-    backgroundColor: '#7c4dff',
+    backgroundColor: '#6d46d4',
     paddingVertical: 11,
     alignItems: 'center',
   },

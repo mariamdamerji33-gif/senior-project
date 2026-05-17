@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { api } from '@/mvc/models/apiClient'
 import { useAuth } from '@/mvc/controllers'
 import { formatRoleLabel } from '@/utils/roleLabels'
 import { Card } from '@/mvc/views/components/ui/Card'
 import { TextInput } from '@/mvc/views/components/ui/forms/TextInput'
+import { TableRowActionsMenu } from '@/mvc/views/components/ui/TableRowActionsMenu'
 
 type UserRow = {
   id: string
@@ -16,10 +17,12 @@ type UserRow = {
 
 export function ManagerUsersPage() {
   const { token } = useAuth()
+  const navigate = useNavigate()
   const [users, setUsers] = useState<UserRow[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [q, setQ] = useState('')
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -53,9 +56,7 @@ export function ManagerUsersPage() {
   return (
     <div className="ui-page">
       <h2 className="ui-pageTitle">Staff & accounts</h2>
-      <p className="ui-pageLead">View all accounts (families, specialists, coordinators, admins).</p>
-
-      <Card style={{ padding: 16, marginBottom: 12 }}>
+<Card style={{ padding: 16, marginBottom: 12 }}>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <span style={{ fontWeight: 700 }}>Search</span>
           <TextInput value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or email..." />
@@ -81,7 +82,7 @@ export function ManagerUsersPage() {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Role</th>
-                  <th aria-label="Family profile actions" />
+                  <th aria-label="Actions" />
                 </tr>
               </thead>
               <tbody>
@@ -92,9 +93,20 @@ export function ManagerUsersPage() {
                     <td>{formatRoleLabel(u.role)}</td>
                     <td>
                       {u.role === 'parent' ? (
-                        <Link className="ui-dashLink" to={`/dashboard/users/parent/${encodeURIComponent(u.id)}`}>
-                          Profile
-                        </Link>
+                        <div id={`manager-user-row-actions-${u.id}`} className="ui-rowActionsHost">
+                          <TableRowActionsMenu
+                            open={menuOpenId === u.id}
+                            onOpenChange={(open) => setMenuOpenId(open ? u.id : null)}
+                            items={[
+                              {
+                                id: 'profile',
+                                label: 'View profile',
+                                onClick: () =>
+                                  navigate(`/dashboard/users/parent/${encodeURIComponent(u.id)}`),
+                              },
+                            ]}
+                          />
+                        </div>
                       ) : (
                         <span style={{ opacity: 0.5 }}>—</span>
                       )}

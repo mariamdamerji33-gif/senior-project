@@ -62,6 +62,11 @@ async function listSupportRequests(req, res) {
 
 async function updateSupportRequest(req, res) {
   const { id } = req.params;
+  const action = String(req.body?.action || '').trim().toLowerCase();
+  if (action === 'delete') {
+    return deleteSupportRequest(req, res);
+  }
+
   const nextStatus = String(req.body?.status || '').trim();
   const allowed = ['sent', 'in_progress', 'resolved'];
 
@@ -77,7 +82,10 @@ async function updateSupportRequest(req, res) {
       action: 'support.request.status',
       targetId: String(id),
       targetType: 'support_request',
-      details: { status: nextStatus },
+      details: {
+        status: nextStatus,
+        redacted: nextStatus === 'resolved',
+      },
     });
     res.json({ request });
   } catch (err) {
@@ -86,4 +94,29 @@ async function updateSupportRequest(req, res) {
   }
 }
 
-module.exports = { createSupportRequest, listSupportRequests, updateSupportRequest };
+async function deleteSupportRequest(req, res) {
+  const { id } = req.params;
+
+  try {
+    const deleted = await supportRequestModel.deleteRequest(id);
+    if (!deleted) return res.status(404).json({ error: 'Support request not found.' });
+    await writeAuditLog({
+      ...baseActor(req),
+      action: 'support.request.delete',
+      targetId: String(id),
+      targetType: 'support_request',
+      details: {},
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    if (isMissingSupportTable(err)) return supportTableError(res);
+    res.status(500).json({ error: err.message || 'Failed to delete support request' });
+  }
+}
+
+module.exports = {
+  createSupportRequest,
+  listSupportRequests,
+  updateSupportRequest,
+  deleteSupportRequest,
+};

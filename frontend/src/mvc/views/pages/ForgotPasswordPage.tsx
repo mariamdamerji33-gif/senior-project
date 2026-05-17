@@ -21,16 +21,9 @@ export function ForgotPasswordPage() {
   return (
     <AuthLayout>
       <h2 className="auth-stepTitle">Reset password</h2>
-      <p className="auth-stepLead">
-        Enter the email for your account. Staff and family accounts can reset a password here; family day-to-day access is
-        through the mobile app. If the email is registered, we send reset steps when email delivery is enabled.
-      </p>
 
       {donePayload ? (
         <>
-          <p className="auth-stepLead" style={{ marginTop: 8 }}>
-            {donePayload.message}
-          </p>
           {donePayload.devNotice ? (
             <div
               role="note"

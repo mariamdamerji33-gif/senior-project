@@ -3,11 +3,13 @@ import { api } from '@/mvc/models/apiClient'
 import { useAuth } from '@/mvc/controllers'
 import { Card } from '@/mvc/views/components/ui/Card'
 import { Button } from '@/mvc/views/components/ui/Button'
-import { useConfirmDialog } from '@/mvc/views/components/ui/useConfirmDialog'
 import { Select } from '@/mvc/views/components/ui/forms/Select'
 import { TextInput } from '@/mvc/views/components/ui/forms/TextInput'
 import { downloadCsv } from '@/utils/csvDownload'
 import { useToast } from '@/mvc/views/components/useToast'
+import { TableRowActionsMenu } from '@/mvc/views/components/ui/TableRowActionsMenu'
+import { RowEditPopover } from '@/mvc/views/components/ui/RowEditPopover'
+import { ManagerSessionEditForm } from '@/mvc/views/components/manager/ManagerSessionEditForm'
 
 type Child = { id: string; name: string; age: number }
 type UserRow = { id: string; name: string | null; email: string; role: string | null }
@@ -34,28 +36,62 @@ function formatSessionWhen(iso: string) {
 export function ManagerSessionsPage() {
   const { token } = useAuth()
   const toast = useToast()
-  const { confirm, confirmDialog } = useConfirmDialog()
   const [children, setChildren] = useState<Child[]>([])
   const [therapists, setTherapists] = useState<UserRow[]>([])
   const [sessions, setSessions] = useState<SessionRow[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [childId, setChildId] = useState('')
-  const [therapistId, setTherapistId] = useState('')
-  const [whenLocal, setWhenLocal] = useState(() => localDatetimeInputValue())
-  const [status, setStatus] = useState('scheduled')
-  const [saving, setSaving] = useState(false)
-  const [createError, setCreateError] = useState<string | null>(null)
-
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editing, setEditing] = useState<SessionRow | null>(null)
   const [editWhenLocal, setEditWhenLocal] = useState('')
   const [editStatus, setEditStatus] = useState('scheduled')
-  const [mutateId, setMutateId] = useState<string | null>(null)
+  const [editSaving, setEditSaving] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
   const [tableActionError, setTableActionError] = useState<string | null>(null)
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
 
   const [listQuery, setListQuery] = useState('')
   const [listStatus, setListStatus] = useState<string>('all')
+
+  function openEdit(session: SessionRow) {
+    setMenuOpenId(null)
+    setEditing(session)
+    setEditWhenLocal(localDatetimeInputValue(new Date(session.date)))
+    setEditStatus(session.status)
+    setEditError(null)
+  }
+
+  function closeEdit() {
+    setEditing(null)
+    setEditError(null)
+  }
+
+  function saveEdit() {
+    if (!token || !editing?.id) return
+    const dateIso = toIsoFromLocalInput(editWhenLocal)
+    if (!dateIso) {
+      setEditError('Pick a valid date and time')
+      return
+    }
+    setEditSaving(true)
+    setEditError(null)
+    setTableActionError(null)
+    void (async () => {
+      try {
+        await api.managerPatchSession(token, editing.id, { date: dateIso, status: editStatus })
+        const refreshed = await api.managerSessions(token)
+        setSessions(refreshed.sessions as SessionRow[])
+        closeEdit()
+        toast('Session updated', 'success')
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Failed to update session'
+        setEditError(msg)
+        setTableActionError(msg)
+      } finally {
+        setEditSaving(false)
+      }
+    })()
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -87,17 +123,6 @@ export function ManagerSessionsPage() {
     }
   }, [token])
 
-  useEffect(() => {
-    if (!childId && children.length > 0) setChildId(children[0].id)
-  }, [children, childId])
-
-  useEffect(() => {
-    if (!therapistId && therapists.length > 0) setTherapistId(therapists[0].id)
-  }, [therapists, therapistId])
-
-  const canCreate =
-    !!token && !!childId && !!therapistId && whenLocal.trim().length > 0 && children.length > 0 && !saving
-
   const childNameById = useMemo(() => new Map(children.map((c) => [c.id, c.name])), [children])
   const therapistNameById = useMemo(
     () => new Map(therapists.map((t) => [t.id, t.name || t.email])),
@@ -119,109 +144,9 @@ export function ManagerSessionsPage() {
     <div className="ui-page">
       <h2 className="ui-pageTitle">Sessions</h2>
       <p className="ui-pageLead">
-        Create, edit, or remove support sessions for any student and teacher.
+        Teachers schedule sessions from <strong>Support sessions</strong> on their dashboard. Here you can review, update, or
+        update session times and status for the whole school.
       </p>
-
-      <Card style={{ padding: 16, marginBottom: 12 }}>
-        <h3 className="ui-sectionTitle">Create session</h3>
-
-        {children.length === 0 || therapists.length === 0 ? (
-          <div style={{ opacity: 0.85 }}>
-            Add at least one student (Students Management) and one teacher account before scheduling.
-          </div>
-        ) : (
-          <>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              <label style={{ minWidth: 220, flex: '1 1 220px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span style={{ fontWeight: 700 }}>Student</span>
-                <Select value={childId} onChange={(e) => setChildId(e.target.value)}>
-                  {children.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} (Age {c.age})
-                    </option>
-                  ))}
-                </Select>
-              </label>
-
-              <label style={{ minWidth: 220, flex: '1 1 220px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span style={{ fontWeight: 700 }}>Teacher</span>
-                <Select value={therapistId} onChange={(e) => setTherapistId(e.target.value)}>
-                  {therapists.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name || t.email}
-                    </option>
-                  ))}
-                </Select>
-              </label>
-
-              <label style={{ minWidth: 220, flex: '1 1 220px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span style={{ fontWeight: 700 }}>Date &amp; time</span>
-                <input
-                  type="datetime-local"
-                  value={whenLocal}
-                  onChange={(e) => setWhenLocal(e.target.value)}
-                  style={{
-                    padding: '10px 12px',
-                    borderRadius: 10,
-                    border: '1px solid var(--border)',
-                    background: 'var(--surface)',
-                    color: 'inherit',
-                    font: 'inherit',
-                  }}
-                />
-              </label>
-
-              <label style={{ minWidth: 180, flex: '0 1 180px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span style={{ fontWeight: 700 }}>Status</span>
-                <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-                  <option value="scheduled">scheduled</option>
-                  <option value="confirmed">confirmed</option>
-                  <option value="completed">completed</option>
-                  <option value="cancelled">cancelled</option>
-                </Select>
-              </label>
-
-              <Button
-                type="button"
-                disabled={!canCreate}
-                variant={canCreate ? 'primary' : 'ghost'}
-                onClick={() => {
-                  if (!token || !canCreate) return
-                  const dateIso = toIsoFromLocalInput(whenLocal)
-                  if (!dateIso) {
-                    setCreateError('Pick a valid date and time')
-                    return
-                  }
-                  setCreateError(null)
-                  setSaving(true)
-                  void (async () => {
-                    try {
-                      await api.managerAddSession(token, { childId, therapistId, date: dateIso, status })
-                      const refreshed = await api.managerSessions(token)
-                      setSessions(refreshed.sessions as SessionRow[])
-                      setWhenLocal(localDatetimeInputValue())
-                      setStatus('scheduled')
-                      toast('Session created', 'success')
-                    } catch (err: any) {
-                      setCreateError(err?.message || 'Failed to create session')
-                    } finally {
-                      setSaving(false)
-                    }
-                  })()
-                }}
-              >
-                {saving ? 'Saving…' : 'Create session'}
-              </Button>
-            </div>
-            {createError ? (
-              <div className="ui-alert ui-alertError ui-textErrorStrong ui-textErrorMt" role="alert">
-                {createError}
-              </div>
-            ) : null}
-          </>
-        )}
-      </Card>
-
       {loading ? <div style={{ opacity: 0.85 }}>Loading...</div> : null}
       {error ? (
         <div className="ui-alert ui-alertError ui-textErrorStrong" role="alert">
@@ -237,7 +162,9 @@ export function ManagerSessionsPage() {
           </div>
         ) : null}
         {sessions.length === 0 ? (
-          <div style={{ opacity: 0.85 }}>No sessions yet.</div>
+          <div style={{ opacity: 0.85 }}>
+            No sessions yet. Ask teachers to schedule from <strong>Support sessions</strong> on their dashboard.
+          </div>
         ) : (
           <>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 12 }}>
@@ -297,143 +224,32 @@ export function ManagerSessionsPage() {
                   <th>Teacher</th>
                   <th>When</th>
                   <th>Status</th>
-                  <th style={{ width: 200 }}>Actions</th>
+                  <th aria-label="Actions" />
                 </tr>
               </thead>
               <tbody>
                 {filteredSessions.map((s) => {
-                  const isEditing = editingId === s.id
-                  const busy = mutateId === s.id
-                  const inputStyle = {
-                    padding: '8px 10px',
-                    borderRadius: 8,
-                    border: '1px solid var(--border)',
-                    background: 'var(--surface)',
-                    color: 'inherit',
-                    font: 'inherit',
-                  } as const
                   return (
                     <tr key={s.id}>
                       <td>{childNameById.get(s.childId) || s.childId}</td>
                       <td>{therapistNameById.get(s.therapistId) || s.therapistId}</td>
+                      <td>{formatSessionWhen(s.date)}</td>
+                      <td>{s.status}</td>
                       <td>
-                        {isEditing ? (
-                          <input
-                            type="datetime-local"
-                            value={editWhenLocal}
-                            onChange={(e) => setEditWhenLocal(e.target.value)}
-                            disabled={busy}
-                            style={inputStyle}
+                        <div id={`manager-session-row-actions-${s.id}`} className="ui-rowActionsHost">
+                          <TableRowActionsMenu
+                            open={menuOpenId === s.id}
+                            onOpenChange={(open) => setMenuOpenId(open ? s.id : null)}
+                            items={[
+                              {
+                                id: 'update',
+                                label: 'Update',
+                                disabled: !token || editSaving,
+                                onClick: () => openEdit(s),
+                              },
+                            ]}
                           />
-                        ) : (
-                          formatSessionWhen(s.date)
-                        )}
-                      </td>
-                      <td>
-                        {isEditing ? (
-                          <Select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} disabled={busy}>
-                            <option value="scheduled">scheduled</option>
-                            <option value="confirmed">confirmed</option>
-                            <option value="completed">completed</option>
-                            <option value="cancelled">cancelled</option>
-                          </Select>
-                        ) : (
-                          s.status
-                        )}
-                      </td>
-                      <td>
-                        {isEditing ? (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                            <Button
-                              type="button"
-                              variant="primary"
-                              disabled={busy || !token}
-                              onClick={() => {
-                                if (!token) return
-                                const dateIso = toIsoFromLocalInput(editWhenLocal)
-                                if (!dateIso) {
-                                  setTableActionError('Pick a valid date and time')
-                                  return
-                                }
-                                setTableActionError(null)
-                                setMutateId(s.id)
-                                void (async () => {
-                                  try {
-                                    await api.managerPatchSession(token, s.id, { date: dateIso, status: editStatus })
-                                    const refreshed = await api.managerSessions(token)
-                                    setSessions(refreshed.sessions as SessionRow[])
-                                    setEditingId(null)
-                                    toast('Session updated', 'success')
-                                  } catch (err: any) {
-                                    setTableActionError(err?.message || 'Failed to update session')
-                                  } finally {
-                                    setMutateId(null)
-                                  }
-                                })()
-                              }}
-                            >
-                              {busy ? 'Saving…' : 'Save'}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              disabled={busy}
-                              onClick={() => {
-                                setEditingId(null)
-                                setTableActionError(null)
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              disabled={!!mutateId || (editingId !== null && editingId !== s.id) || !token}
-                              onClick={() => {
-                                setTableActionError(null)
-                                setEditingId(s.id)
-                                setEditWhenLocal(localDatetimeInputValue(new Date(s.date)))
-                                setEditStatus(s.status)
-                              }}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              disabled={!!mutateId || editingId !== null || !token}
-                              onClick={() => {
-                                if (!token) return
-                                void (async () => {
-                                  const ok = await confirm({
-                                    title: 'Delete session?',
-                                    description: 'This permanently removes the session. This cannot be undone.',
-                                    confirmLabel: 'Delete',
-                                    tone: 'danger',
-                                  })
-                                  if (!ok) return
-                                  setTableActionError(null)
-                                  setMutateId(s.id)
-                                  try {
-                                    await api.managerDeleteSession(token, s.id)
-                                    const refreshed = await api.managerSessions(token)
-                                    setSessions(refreshed.sessions as SessionRow[])
-                                    toast('Session removed', 'success')
-                                  } catch (err: any) {
-                                    setTableActionError(err?.message || 'Failed to delete session')
-                                  } finally {
-                                    setMutateId(null)
-                                  }
-                                })()
-                              }}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        )}
+                        </div>
                       </td>
                     </tr>
                   )
@@ -444,7 +260,24 @@ export function ManagerSessionsPage() {
           </>
         )}
       </Card>
-      {confirmDialog}
+      <RowEditPopover
+        open={!!editing}
+        centered
+        title={editing ? `Update session` : 'Update session'}
+        onClose={closeEdit}
+      >
+        <ManagerSessionEditForm
+          whenLocal={editWhenLocal}
+          status={editStatus}
+          editError={editError}
+          editSaving={editSaving}
+          canSave={!!token && !!editWhenLocal.trim()}
+          onWhenChange={setEditWhenLocal}
+          onStatusChange={setEditStatus}
+          onSave={saveEdit}
+          onCancel={closeEdit}
+        />
+      </RowEditPopover>
     </div>
   )
 }

@@ -50,6 +50,7 @@ export function ParentChatScreen({ route, navigation }: Props) {
   const [recording, setRecording] = useState<Audio.Recording | null>(null)
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({})
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const isEn = language === 'en'
   const copy = {
     eyebrow: isEn ? 'Messages' : 'الرسائل',
@@ -85,6 +86,10 @@ export function ParentChatScreen({ route, navigation }: Props) {
     voiceNoteOpenFailed: isEn ? 'Could not open this voice note.' : 'تعذر فتح هذه الرسالة الصوتية.',
     playFailed: isEn ? 'Play failed' : 'فشل التشغيل',
     playVoiceFailed: isEn ? 'Could not play voice note' : 'تعذر تشغيل الرسالة الصوتية',
+    delete: isEn ? 'Delete' : 'حذف',
+    deleteTitle: isEn ? 'Delete message?' : 'حذف الرسالة؟',
+    deleteBody: isEn ? 'This removes your message from the thread.' : 'سيتم إزالة رسالتك من المحادثة.',
+    deleteFailed: isEn ? 'Delete failed' : 'فشل الحذف',
   }
 
   const loadMessages = async () => {
@@ -281,6 +286,30 @@ export function ParentChatScreen({ route, navigation }: Props) {
     }
   }
 
+  const confirmDelete = (messageId: string) => {
+    if (!token) return
+    Alert.alert(copy.deleteTitle, copy.deleteBody, [
+      { text: isEn ? 'Cancel' : 'إلغاء', style: 'cancel' },
+      {
+        text: copy.delete,
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            setDeletingId(messageId)
+            try {
+              await api.deleteChatMessage(token, messageId, childId)
+              await loadMessages()
+            } catch (e) {
+              Alert.alert(copy.deleteFailed, e instanceof Error ? e.message : copy.unknownError)
+            } finally {
+              setDeletingId(null)
+            }
+          })()
+        },
+      },
+    ])
+  }
+
   return (
     <SafeAreaView style={[screenLayout.pageBg, { backgroundColor: appColors.pageBg }]} edges={['top', 'left', 'right']}>
       <View style={styles.outer}>
@@ -324,7 +353,19 @@ export function ParentChatScreen({ route, navigation }: Props) {
               if (isImage) void loadChatImage(m)
               return (
                 <View key={m.id} style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
-                  <Text style={styles.bubbleRole}>{formatSenderRole(m.senderRole)}</Text>
+                  <View style={styles.bubbleHeader}>
+                    <Text style={styles.bubbleRole}>{formatSenderRole(m.senderRole)}</Text>
+                    {mine ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={copy.delete}
+                        disabled={deletingId === m.id}
+                        onPress={() => confirmDelete(m.id)}
+                      >
+                        <Text style={styles.deleteLink}>{deletingId === m.id ? '…' : copy.delete}</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
                   {voiceNoteLabel(m.text) ? (
                     <Pressable style={[appButton.outline, styles.playVoiceBtn]} onPress={() => void playVoiceNote(m)} disabled={playingId === m.id}>
                       <Text style={appButton.outlineText}>
@@ -396,7 +437,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e2daf7',
+    borderColor: '#dfd6ee',
     shadowColor: '#1e1040',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -406,12 +447,14 @@ const styles = StyleSheet.create({
   chatContent: { padding: 12, gap: 8 },
   empty: { color: '#6d6485', textAlign: 'center', marginTop: 18 },
   bubble: { borderRadius: 10, padding: 10, maxWidth: '90%' },
-  bubbleMine: { alignSelf: 'flex-end', backgroundColor: '#ede6ff' },
+  bubbleMine: { alignSelf: 'flex-end', backgroundColor: '#f4f1fb' },
   bubbleOther: { alignSelf: 'flex-start', backgroundColor: '#f5f2ff' },
+  bubbleHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   bubbleRole: { color: '#6d6485', fontSize: 12, textTransform: 'capitalize' },
-  bubbleText: { color: '#2c2144', fontWeight: '600', marginTop: 2 },
+  deleteLink: { color: '#b42318', fontSize: 12, fontWeight: '700', textDecorationLine: 'underline' },
+  bubbleText: { color: '#17131f', fontWeight: '600', marginTop: 2 },
   playVoiceBtn: { marginTop: 4, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 10 },
-  chatImage: { width: 210, height: 150, borderRadius: 10, marginTop: 6, backgroundColor: '#ede6ff' },
+  chatImage: { width: 210, height: 150, borderRadius: 10, marginTop: 6, backgroundColor: '#f4f1fb' },
   bubbleTime: { color: '#7c7392', fontSize: 11, marginTop: 4 },
   input: {
     minHeight: 44,
@@ -419,9 +462,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#d8cffa',
+    borderColor: '#cfc4e6',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#2c2144',
+    color: '#17131f',
   },
 })

@@ -4,8 +4,8 @@
   "description": "Secure workspace for autism-friendly schools.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f2eff9",
-  "theme_color": "#6d46d4",
+  "background_color": "#eff6ff",
+  "theme_color": "#1d4ed8",
   "icons": [
     {
       "src": "/alp-logo.svg",

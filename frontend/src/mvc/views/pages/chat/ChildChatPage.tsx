@@ -2,12 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Card } from '@/mvc/views/components/ui/Card'
 import { Button } from '@/mvc/views/components/ui/Button'
+import { useConfirmDialog } from '@/mvc/views/components/ui/useConfirmDialog'
 import { Select } from '@/mvc/views/components/ui/forms/Select'
 import { TextArea } from '@/mvc/views/components/ui/forms/TextArea'
 import { api } from '@/mvc/models/apiClient'
 import { useAuth } from '@/mvc/controllers'
 
-export type ChatMode = 'parent' | 'therapist'
+export type ChatMode = 'parent' | 'teacher'
 
 type ChatMessage = {
   id: string
@@ -59,6 +60,13 @@ function idsEqual(a: string, b: string) {
 }
 
 /** Always show role (Teacher / Family) so the thread reads as a two-party chat; append · You for your messages. */
+function canDeleteMessage(m: ChatMessage, mode: ChatMode, myId: string) {
+  if (!myId || !m.id) return false
+  if (mode === 'teacher') return true
+  if (mode === 'parent') return idsEqual(m.senderId, myId)
+  return false
+}
+
 function senderLabel(m: ChatMessage, myId: string) {
   const roleName =
     m.senderRole === 'therapist'
@@ -73,6 +81,7 @@ function senderLabel(m: ChatMessage, myId: string) {
 
 export function ChildChatPage({ mode }: { mode: ChatMode }) {
   const { token, user } = useAuth()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const location = useLocation()
   const navigate = useNavigate()
   const myId = user?.id ?? ''
@@ -89,6 +98,7 @@ export function ChildChatPage({ mode }: { mode: ChatMode }) {
   const [recording, setRecording] = useState<MediaRecorder | null>(null)
   const [recordingStartedAt, setRecordingStartedAt] = useState<number | null>(null)
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({})
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // Mark a thread as "seen" when the user is viewing it (used by dashboard notifications).
   useEffect(() => {
@@ -121,7 +131,7 @@ export function ChildChatPage({ mode }: { mode: ChatMode }) {
       setLoadingChildren(true)
       try {
         const res =
-          mode === 'parent' ? await api.parentChildren(token) : await api.therapistChildren(token)
+          mode === 'parent' ? await api.parentChildren(token) : await api.teacherChildren(token)
         if (cancelled) return
         const list = (res.children || []) as { id: string; name: string }[]
         setChildren(list)
@@ -265,6 +275,40 @@ export function ChildChatPage({ mode }: { mode: ChatMode }) {
     setRecordingStartedAt(null)
   }
 
+  async function deleteMessage(messageId: string) {
+    if (!token || !childId) return
+    const ok = await confirm({
+      title: 'Delete message?',
+      description:
+        mode === 'teacher'
+          ? 'This removes the message from the family thread. They will no longer see it in the app.'
+          : 'This removes your message from the thread.',
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    })
+    if (!ok) return
+    setDeletingId(messageId)
+    setSendError(null)
+    try {
+      await api.chatDeleteMessage(token, messageId, childId)
+      setVoiceUrls((prev) => {
+        const next = { ...prev }
+        delete next[messageId]
+        return next
+      })
+      setImageUrls((prev) => {
+        const next = { ...prev }
+        delete next[messageId]
+        return next
+      })
+      await loadMessages(true)
+    } catch (e) {
+      setSendError(e instanceof Error ? e.message : 'Delete failed')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   async function sendVoiceRecording(blob: Blob) {
     if (!token || !childId) return
     if (blob.size < 1) {
@@ -280,16 +324,9 @@ export function ChildChatPage({ mode }: { mode: ChatMode }) {
     }
   }
 
-  const subtitle =
-    mode === 'parent'
-      ? 'Message your child’s teacher. Messages sync to this screen about every 10 seconds (or when you return to this tab).'
-      : 'Message parents for children assigned to you. Messages sync to this screen about every 10 seconds (or when you return to this tab).'
-
   return (
     <div className="ui-page">
       <h2 className="ui-pageTitle">Chat</h2>
-      <p className="ui-pageLead">{subtitle}</p>
-
       <Card style={{ overflow: 'hidden', padding: 0 }}>
         <div
           style={{
@@ -334,8 +371,9 @@ export function ChildChatPage({ mode }: { mode: ChatMode }) {
               </div>
               {msgError.includes('API route not found') || msgError.includes('Restart the backend') ? (
                 <p style={{ opacity: 0.9, marginTop: 8 }}>
-                  Save your work, stop and start the backend (<code>npm start</code> or <code>node server.js</code> in{' '}
-                  <code>backend</code>), then refresh this page.
+                  The API server is running an old build. Stop it and start again from the <code>backend</code> folder (
+                  <code>npm start</code> or <code>node server.js</code>), then hard-refresh this page. Chat delete needs{' '}
+                  <code>DELETE /api/chat/messages/:id</code> from the latest backend.
                 </p>
               ) : null}
               {msgError.includes('chat_messages') || msgError.includes('Chat table') ? (
@@ -363,8 +401,31 @@ export function ChildChatPage({ mode }: { mode: ChatMode }) {
                       background: mine ? 'var(--chat-bubble-mine)' : 'var(--chat-bubble-theirs)',
                     }}
                   >
-                    <div style={{ fontWeight: 800, fontSize: 12, opacity: 0.85 }}>
-                      {senderLabel(m, myId)} • {formatTime(m.createdAt)}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                        fontWeight: 800,
+                        fontSize: 12,
+                        opacity: 0.85,
+                      }}
+                    >
+                      <span>
+                        {senderLabel(m, myId)} • {formatTime(m.createdAt)}
+                      </span>
+                      {canDeleteMessage(m, mode, myId) ? (
+                        <button
+                          type="button"
+                          className="ui-chatDeleteBtn"
+                          disabled={deletingId === m.id}
+                          onClick={() => void deleteMessage(m.id)}
+                          title="Delete message"
+                        >
+                          {deletingId === m.id ? '…' : 'Delete'}
+                        </button>
+                      ) : null}
                     </div>
                     {voice ? (
                       <div style={{ marginTop: 8 }}>
@@ -482,11 +543,19 @@ export function ChildChatPage({ mode }: { mode: ChatMode }) {
           </label>
         </div>
         {sendError ? (
-          <div className="ui-alert ui-alertError ui-textErrorStrong" style={{ margin: 14 }} role="alert">
-            {sendError}
+          <div style={{ margin: 14 }}>
+            <div className="ui-alert ui-alertError ui-textErrorStrong" role="alert">
+              {sendError}
+            </div>
+            {sendError.includes('API route not found') ? (
+              <p className="ui-helpText" style={{ marginTop: 8 }}>
+                Restart the backend from the <code>backend</code> folder, then try Delete again.
+              </p>
+            ) : null}
           </div>
         ) : null}
       </Card>
+      {confirmDialog}
     </div>
   )
 }

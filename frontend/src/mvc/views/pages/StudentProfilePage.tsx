@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '@/mvc/models/apiClient'
 import { useAuth } from '@/mvc/controllers'
 import { Card } from '@/mvc/views/components/ui/Card'
 import { Button } from '@/mvc/views/components/ui/Button'
+import { useConfirmDialog } from '@/mvc/views/components/ui/useConfirmDialog'
+import { ProfileAvatarPicker } from '@/mvc/views/components/profile/ProfileAvatarPicker'
+import { PHONE_INPUT_PLACEHOLDER, formatPhoneDisplay, normalizePhoneForApi } from '@/utils/phoneInput'
 
 type UserLite = { id: string; name: string | null; email: string; role?: string | null }
 type Student = {
@@ -53,84 +56,40 @@ function displayName(u: UserLite | null) {
   return String(u.name || '').trim() || String(u.email || '').trim() || u.id
 }
 
-function avatarInitials(name: string) {
-  const parts = String(name || '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-  const s = parts.map((p) => p[0]).join('')
-  return (s || '?').toUpperCase().slice(0, 2)
-}
-
 function shortDate(iso: string) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleDateString()
+  return d.toLocaleDateString(undefined, { dateStyle: 'medium' })
 }
 
-/** Matches backend `ALLOWED_SESSION_STATUSES`: scheduled | confirmed | completed | cancelled */
-function normalizeSessionStatus(raw: unknown): 'scheduled' | 'confirmed' | 'completed' | 'cancelled' {
-  const s = String(raw ?? 'scheduled')
-    .trim()
-    .toLowerCase()
-  if (s === 'scheduled' || s === 'confirmed' || s === 'completed' || s === 'cancelled') return s
-  return 'scheduled'
+function sessionStatusLabel(raw: unknown) {
+  const s = String(raw ?? 'scheduled').trim().toLowerCase()
+  if (s === 'completed') return 'Done'
+  if (s === 'confirmed') return 'Confirmed'
+  if (s === 'cancelled') return 'Cancelled'
+  return 'Planned'
 }
 
-function ProgressTimeline({ items }: { items: ReportLite[] }) {
-  const pts = [...items]
-    .filter((r) => Number.isFinite(r.progressScore) && String(r.createdAt || '').length > 0)
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    .slice(-12)
+function profileBackPath(role: string | undefined) {
+  if (role === 'therapist') return '/dashboard/children'
+  return '/dashboard/children-management'
+}
 
-  if (pts.length < 2) {
-    return <div className="ui-helpText">Not enough data yet to draw a timeline.</div>
-  }
+function profileBackLabel(role: string | undefined) {
+  if (role === 'therapist') return '← Back to Students'
+  return '← Back to Students Management'
+}
 
-  const w = 520
-  const h = 140
-  const pad = 14
-  const xs = pts.map((_, i) => i)
-  const xMax = Math.max(...xs, 1)
-
-  const toX = (x: number) => pad + (x / xMax) * (w - pad * 2)
-  const toY = (v: number) => pad + ((100 - v) / 100) * (h - pad * 2)
-
-  const d = pts.map((p, i) => `${toX(i).toFixed(1)},${toY(Number(p.progressScore)).toFixed(1)}`).join(' ')
-  const last = pts[pts.length - 1]
-
-  return (
-    <div style={{ textAlign: 'left' }}>
-      <svg width="100%" viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Progress timeline chart">
-        <defs>
-          <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor="var(--accent)" stopOpacity="0.18" />
-            <stop offset="1" stopColor="var(--calm)" stopOpacity="0.18" />
-          </linearGradient>
-        </defs>
-        <rect x="0" y="0" width={w} height={h} rx="14" fill="url(#g)" />
-        <polyline
-          points={d}
-          fill="none"
-          stroke="var(--accent)"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.95"
-        />
-        <circle cx={toX(pts.length - 1)} cy={toY(Number(last.progressScore))} r="5.5" fill="var(--accent-bright)" />
-      </svg>
-      <div className="ui-helpText" style={{ marginTop: 8 }}>
-        Based on recent report scores (0–100). Latest: <strong>{last.progressScore}</strong> on{' '}
-        <strong>{shortDate(last.createdAt)}</strong>.
-      </div>
-    </div>
-  )
+function notePreview(text: string, max = 120) {
+  const t = String(text || '').trim()
+  if (!t) return '—'
+  if (t.length <= max) return t
+  return `${t.slice(0, max)}…`
 }
 
 export function StudentProfilePage() {
   const { token, user } = useAuth()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const params = useParams()
   const studentId = String(params.studentId || '').trim()
 
@@ -156,6 +115,7 @@ export function StudentProfilePage() {
   const [error, setError] = useState<string | null>(null)
 
   const isCoordinator = user?.role === 'manager' || user?.role === 'super_admin'
+  const isTeacher = user?.role === 'therapist'
 
   useEffect(() => {
     if (!token || !studentId) return
@@ -186,8 +146,7 @@ export function StudentProfilePage() {
   }, [token, studentId])
 
   useEffect(() => {
-    if (!token || !studentId) return
-    if (user?.role !== 'manager' && user?.role !== 'super_admin') {
+    if (!token || !studentId || !isCoordinator) {
       setOverview(null)
       return
     }
@@ -212,11 +171,10 @@ export function StudentProfilePage() {
     return () => {
       cancelled = true
     }
-  }, [token, studentId, user?.role])
+  }, [token, studentId, isCoordinator])
 
   useEffect(() => {
-    if (!token || !studentId) return
-    if (!isCoordinator) {
+    if (!token || !studentId || !isCoordinator) {
       setContacts([])
       setDocs([])
       return
@@ -226,13 +184,16 @@ export function StudentProfilePage() {
     setContactsError(null)
     void (async () => {
       try {
-        const [cRes, dRes] = await Promise.all([api.studentContacts(token, studentId), api.studentDocuments(token, studentId)])
+        const [cRes, dRes] = await Promise.all([
+          api.studentContacts(token, studentId),
+          api.studentDocuments(token, studentId),
+        ])
         if (cancelled) return
         setContacts((cRes.contacts || []) as Contact[])
         setDocs((dRes.documents || []) as DocumentRow[])
       } catch (e: unknown) {
         if (cancelled) return
-        const msg = e instanceof Error ? e.message : 'Failed to load student extras'
+        const msg = e instanceof Error ? e.message : 'Failed to load files and contacts'
         setDocsError(msg)
         setContactsError(msg)
       }
@@ -242,374 +203,213 @@ export function StudentProfilePage() {
     }
   }, [token, studentId, isCoordinator])
 
-  const roleHint = useMemo(() => {
-    if (user?.role === 'manager') return 'Coordinator view'
-    if (user?.role === 'super_admin') return 'School Admin view'
-    if (user?.role === 'therapist') return 'Teacher view'
-    if (user?.role === 'parent') return 'Family view'
-    return 'Profile'
-  }, [user?.role])
-
-  function jumpTo(sectionId: string) {
-    if (typeof document === 'undefined') return
-    const el = document.getElementById(sectionId)
-    if (!el) return
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  function uploadStudentPhoto(f: File) {
+    if (!token || !studentId || profilePhotoBusy) return
+    setProfilePhotoBusy(true)
+    setProfilePhotoError(null)
+    void (async () => {
+      try {
+        const out = await api.studentUploadProfilePhoto(token, studentId, f)
+        setStudent((prev) => (prev ? { ...prev, profilePhotoUrl: out.profilePhotoUrl ?? null } : prev))
+      } catch (err: unknown) {
+        setProfilePhotoError(err instanceof Error ? err.message : 'Upload failed')
+      } finally {
+        setProfilePhotoBusy(false)
+      }
+    })()
   }
+
+  function removeStudentPhoto() {
+    if (!token || !studentId || profilePhotoBusy) return
+    void (async () => {
+      const ok = await confirm({
+        title: 'Remove photo?',
+        description: 'The student profile will show initials until a new photo is added.',
+        confirmLabel: 'Remove',
+        tone: 'danger',
+      })
+      if (!ok) return
+      setProfilePhotoBusy(true)
+      setProfilePhotoError(null)
+      try {
+        await api.studentDeleteProfilePhoto(token, studentId)
+        setStudent((prev) => (prev ? { ...prev, profilePhotoUrl: null } : prev))
+      } catch (err: unknown) {
+        setProfilePhotoError(err instanceof Error ? err.message : 'Remove failed')
+      } finally {
+        setProfilePhotoBusy(false)
+      }
+    })()
+  }
+
+  const quickLinks =
+    user?.role === 'manager'
+      ? [{ to: '/dashboard/children-management', label: 'Students Management' }]
+      : user?.role === 'super_admin'
+        ? [
+            { to: '/dashboard/children-management', label: 'Students Management' },
+            { to: '/dashboard/reports', label: 'Notes & reports' },
+          ]
+        : [
+            { to: '/dashboard/teacher-reports', label: 'Notes & reports' },
+            { to: '/dashboard/teacher-sessions', label: 'Support sessions' },
+            { to: '/dashboard/teacher-treatment', label: 'IEP / plan' },
+            { to: '/dashboard/teacher-steps', label: 'Home steps for family' },
+            { to: '/dashboard/teacher-chat', label: 'Family chat' },
+          ]
 
   return (
     <div className="ui-page">
       <h2 className="ui-pageTitle">Student profile</h2>
-      <p className="ui-pageLead ui-pageLeadNarrow">
-        Central view for a student’s information, plan, notes, sessions, and home steps. ({roleHint})
+      <p className="ui-pageLead">
+        <Link className="ui-dashLink" to={profileBackPath(user?.role)}>
+          {profileBackLabel(user?.role)}
+        </Link>
       </p>
 
-      {loading ? <div style={{ opacity: 0.85 }}>Loading…</div> : null}
+      {loading ? <p className="ui-textMuted">Loading…</p> : null}
       {error ? (
         <div className="ui-alert ui-alertError ui-textErrorStrong" role="alert">
           {error}
         </div>
       ) : null}
+      {profilePhotoError ? (
+        <div className="ui-alert ui-alertError ui-textErrorStrong" role="alert">
+          {profilePhotoError}
+        </div>
+      ) : null}
 
       {student ? (
         <>
-          <Card className="ui-heroCard" style={{ marginBottom: 12 }}>
-            <div
-              className="ui-row"
-              style={{ gap: 18, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-start' }}
-            >
-              <div
-                style={{
-                  width: 96,
-                  height: 96,
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  flexShrink: 0,
-                  background: 'linear-gradient(135deg, var(--accent-soft, rgba(99, 102, 241, 0.2)), var(--calm-soft, rgba(34, 197, 94, 0.15)))',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '2px solid var(--border-subtle, rgba(255,255,255,0.12))',
-                }}
-              >
-                {student.profilePhotoUrl ? (
-                  <img
-                    src={student.profilePhotoUrl}
-                    alt=""
-                    width={96}
-                    height={96}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                ) : (
-                  <span style={{ fontSize: 32, fontWeight: 800, letterSpacing: -0.5, color: 'var(--text-primary, #e8e8ef)' }}>
-                    {avatarInitials(student.name)}
-                  </span>
-                )}
+          <Card className="ui-sectionCard profile-card" style={{ maxWidth: 560, marginTop: 12, textAlign: 'left' }}>
+            {isCoordinator ? (
+              <ProfileAvatarPicker
+                name={student.name}
+                photoUrl={student.profilePhotoUrl}
+                busy={profilePhotoBusy}
+                onPick={uploadStudentPhoto}
+                onRemove={student.profilePhotoUrl ? removeStudentPhoto : undefined}
+              />
+            ) : null}
+
+            <div style={{ marginTop: isCoordinator ? 16 : 0 }}>
+              <div style={{ fontWeight: 850, fontSize: '1.2rem' }}>{student.name}</div>
+              <div className="ui-helpText profile-identityMeta__line">
+                Age <strong>{student.age}</strong>
               </div>
-              <div style={{ flex: '1 1 220px', minWidth: 0 }}>
-                <div className="ui-heroTitle">{student.name}</div>
-                <p className="ui-heroLead" style={{ marginBottom: 0 }}>
-                  Age: <strong>{student.age}</strong>
-                  {student.diagnosis ? (
-                    <>
-                      {' '}
-                      • Notes: <strong>{student.diagnosis}</strong>
-                    </>
-                  ) : null}
-                </p>
-                {isCoordinator ? (
-                  <div className="ui-row" style={{ gap: 10, flexWrap: 'wrap', marginTop: 12, alignItems: 'center' }}>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      disabled={profilePhotoBusy}
-                      className="ui-input"
-                      style={{ maxWidth: 280, padding: 6 }}
-                      onChange={(e) => {
-                        const f = e.target.files?.[0]
-                        e.target.value = ''
-                        if (!token || !studentId || !f || profilePhotoBusy) return
-                        setProfilePhotoBusy(true)
-                        setProfilePhotoError(null)
-                        void (async () => {
-                          try {
-                            const out = await api.studentUploadProfilePhoto(token, studentId, f)
-                            setStudent((prev) =>
-                              prev
-                                ? { ...prev, profilePhotoUrl: out.profilePhotoUrl ?? null }
-                                : prev,
-                            )
-                          } catch (err: unknown) {
-                            setProfilePhotoError(err instanceof Error ? err.message : 'Upload failed')
-                          } finally {
-                            setProfilePhotoBusy(false)
-                          }
-                        })()
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      disabled={profilePhotoBusy || !student.profilePhotoUrl}
-                      onClick={() => {
-                        if (!token || !studentId || profilePhotoBusy) return
-                        setProfilePhotoBusy(true)
-                        setProfilePhotoError(null)
-                        void (async () => {
-                          try {
-                            await api.studentDeleteProfilePhoto(token, studentId)
-                            setStudent((prev) => (prev ? { ...prev, profilePhotoUrl: null } : prev))
-                          } catch (err: unknown) {
-                            setProfilePhotoError(err instanceof Error ? err.message : 'Remove failed')
-                          } finally {
-                            setProfilePhotoBusy(false)
-                          }
-                        })()
-                      }}
-                    >
-                      Remove photo
-                    </Button>
-                    {profilePhotoBusy ? (
-                      <span className="ui-helpText" style={{ width: '100%' }}>
-                        Updating…
-                      </span>
-                    ) : null}
-                    {profilePhotoError ? (
-                      <div className="ui-alert ui-alertError ui-textErrorStrong" role="alert" style={{ width: '100%' }}>
-                        {profilePhotoError}
-                      </div>
-                    ) : null}
-                    <p className="ui-helpText" style={{ width: '100%', marginBottom: 0 }}>
-                      JPEG, PNG, or WebP up to 3 MB. Stored in <code>student-documents</code> (same bucket as IEP PDFs).
-                    </p>
-                  </div>
-                ) : null}
+              {student.diagnosis?.trim() ? (
+                <div className="ui-helpText profile-identityMeta__line">
+                  Diagnosis / notes: <strong>{student.diagnosis.trim()}</strong>
+                </div>
+              ) : null}
+              <div className="ui-helpText profile-identityMeta__line">
+                Teacher: <strong>{displayName(teacher)}</strong>
+              </div>
+              <div className="ui-helpText profile-identityMeta__line">
+                Family: <strong>{displayName(family)}</strong>
               </div>
             </div>
-            <div className="ui-pillRow">
-              <button type="button" className="ui-pill" onClick={() => jumpTo('section-student')}>
-                Student
-              </button>
-              <button type="button" className="ui-pill" onClick={() => jumpTo('section-plan')}>
-                IEP
-              </button>
-              <button type="button" className="ui-pill" onClick={() => jumpTo('section-notes')}>
-                Notes
-              </button>
-              <button type="button" className="ui-pill" onClick={() => jumpTo('section-sessions')}>
-                Sessions
-              </button>
-              <button type="button" className="ui-pill" onClick={() => jumpTo('section-steps')}>
-                Home steps
-              </button>
+
+            <div style={{ marginTop: 18 }}>
+              <h3 className="ui-sectionTitle" style={{ fontSize: '0.95rem', marginBottom: 10 }}>
+                {isTeacher ? 'Open in your tools' : 'School tools'}
+              </h3>
+              <div className="ui-actionsRow">
+                {quickLinks.map((l) => (
+                  <Link key={l.to} className="ui-dashLink" to={l.to}>
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
             </div>
           </Card>
 
-          <div id="section-student" className="ui-row" style={{ alignItems: 'stretch', marginBottom: 12 }}>
-            <Card className="ui-sectionCard" style={{ flex: '1 1 320px' }}>
-              <h3 className="ui-sectionTitle">People</h3>
-              <div className="ui-stack" style={{ gap: 8 }}>
-                <div className="ui-row" style={{ justifyContent: 'space-between' }}>
-                  <strong>Teacher</strong>
-                  <span className="ui-helpText">{displayName(teacher)}</span>
+          {isCoordinator ? (
+            <Card style={{ padding: 16, marginTop: 16, textAlign: 'left' }}>
+              <h3 className="ui-sectionTitle">At a glance</h3>
+              {loadingOverview ? <p className="ui-helpText">Loading school records…</p> : null}
+
+              {!loadingOverview ? (
+                <div className="ui-studentProfileGrid">
+                  <section className="ui-studentProfileBlock">
+                    <h4 className="ui-studentProfileBlock__title">IEP / plan</h4>
+                    {overview?.plans?.length ? (
+                      <ul className="ui-studentProfileList">
+                        {overview.plans.map((p) => (
+                          <li key={p.id}>
+                            <strong>{p.title}</strong>
+                            <span className="ui-helpText">
+                              {' '}
+                              — {String(p.status || 'active')}
+                              {typeof p.activeGoalsCount === 'number'
+                                ? `, ${p.activeGoalsCount} active goal${p.activeGoalsCount === 1 ? '' : 's'}`
+                                : ''}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="ui-helpText">No plan on file yet.</p>
+                    )}
+                  </section>
+
+                  <section className="ui-studentProfileBlock">
+                    <h4 className="ui-studentProfileBlock__title">Home steps</h4>
+                    {overview?.steps?.length ? (
+                      <ul className="ui-studentProfileList">
+                        {overview.steps.slice(0, 5).map((s) => (
+                          <li key={s.id}>
+                            <strong>{s.title}</strong>
+                            <span className="ui-helpText"> — {shortDate(s.createdAt)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="ui-helpText">None published yet.</p>
+                    )}
+                  </section>
+
+                  <section className="ui-studentProfileBlock">
+                    <h4 className="ui-studentProfileBlock__title">Recent notes</h4>
+                    {overview?.reports?.length ? (
+                      <ul className="ui-studentProfileList">
+                        {overview.reports.slice(0, 5).map((r) => (
+                          <li key={r.id}>
+                            <span className="ui-helpText">
+                              {shortDate(r.createdAt)} · {r.progressScore}/100
+                            </span>
+                            <div>{notePreview(r.notes)}</div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="ui-helpText">No notes yet.</p>
+                    )}
+                  </section>
+
+                  <section className="ui-studentProfileBlock">
+                    <h4 className="ui-studentProfileBlock__title">Sessions</h4>
+                    {overview?.sessions?.length ? (
+                      <ul className="ui-studentProfileList">
+                        {overview.sessions.slice(0, 5).map((s) => (
+                          <li key={s.id}>
+                            {shortDate(s.date)} — <strong>{sessionStatusLabel(s.status)}</strong>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="ui-helpText">No sessions yet. Teachers add them under Support sessions.</p>
+                    )}
+                  </section>
                 </div>
-                <div className="ui-row" style={{ justifyContent: 'space-between' }}>
-                  <strong>Family</strong>
-                  <span className="ui-helpText">{displayName(family)}</span>
-                </div>
-              </div>
+              ) : null}
             </Card>
-
-            <Card className="ui-sectionCard" style={{ flex: '2 1 420px' }}>
-              <h3 className="ui-sectionTitle">Quick actions</h3>
-              <div className="ui-actionsRow">
-                {user?.role === 'manager' || user?.role === 'super_admin' ? (
-                  <>
-                    <Link className="ui-dashLink" to="/dashboard/children-management">
-                      Students Management
-                    </Link>
-                    <Link className="ui-dashLink" to="/dashboard/sessions">
-                      Sessions
-                    </Link>
-                    <Link className="ui-dashLink" to="/dashboard/reports">
-                      Notes & reports overview
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Link className="ui-dashLink" to="/dashboard/therapist-treatment">
-                      IEP / Intervention plan
-                    </Link>
-                    <Link className="ui-dashLink" to="/dashboard/therapist-steps">
-                      Steps for families
-                    </Link>
-                    <Link className="ui-dashLink" to="/dashboard/therapist-reports">
-                      Notes & reports
-                    </Link>
-                    <Link className="ui-dashLink" to="/dashboard/therapist-chat">
-                      Family chat
-                    </Link>
-                  </>
-                )}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => window.location.reload()}
-                  title="Reload profile"
-                >
-                  Refresh
-                </Button>
-              </div>
-              <p className="ui-helpText" style={{ marginTop: 10 }}>
-                Tip: this page uses secure access checks — families only see linked students, and teachers only see assigned
-                students.
-              </p>
-            </Card>
-          </div>
-
-          {user?.role === 'manager' || user?.role === 'super_admin' ? (
-            <div className="ui-row" style={{ alignItems: 'stretch', marginBottom: 12 }}>
-              <Card id="section-plan" className="ui-sectionCard" style={{ flex: '1 1 360px' }}>
-                <h3 className="ui-sectionTitle">IEP / plan</h3>
-                {loadingOverview ? <div style={{ opacity: 0.85 }}>Loading…</div> : null}
-                {overview?.plans?.length ? (
-                  <div className="ui-stack" style={{ gap: 10 }}>
-                    {overview.plans.map((p) => (
-                      <div key={p.id} className="ui-row" style={{ justifyContent: 'space-between', gap: 12 }}>
-                        <div style={{ fontWeight: 700 }}>{p.title}</div>
-                        <div className="ui-helpText" style={{ textAlign: 'right' }}>
-                          {String(p.status || 'active')}
-                          {typeof p.activeGoalsCount === 'number' ? ` • active goals: ${p.activeGoalsCount}` : ''}
-                        </div>
-                      </div>
-                    ))}
-                    <div className="ui-helpText">Coordinator preview (full edit is in Teacher/Family plan pages).</div>
-                  </div>
-                ) : (
-                  <div className="ui-helpText">No plan found yet for this student.</div>
-                )}
-              </Card>
-
-              <Card id="section-steps" className="ui-sectionCard" style={{ flex: '1 1 360px' }}>
-                <h3 className="ui-sectionTitle">Home steps</h3>
-                {loadingOverview ? <div style={{ opacity: 0.85 }}>Loading…</div> : null}
-                {overview?.steps?.length ? (
-                  <div className="ui-stack" style={{ gap: 10 }}>
-                    {overview.steps.map((s) => (
-                      <div key={s.id} style={{ textAlign: 'left' }}>
-                        <div style={{ fontWeight: 750 }}>{s.title}</div>
-                        <div className="ui-helpText">
-                          {s.category ? `${s.category} • ` : ''}
-                          {shortDate(s.createdAt)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="ui-helpText">No home steps published yet.</div>
-                )}
-              </Card>
-            </div>
-          ) : null}
-
-          {user?.role === 'manager' || user?.role === 'super_admin' ? (
-            <div className="ui-row" style={{ alignItems: 'stretch' }}>
-              <Card id="section-notes" className="ui-sectionCard" style={{ flex: '1 1 420px' }}>
-                <h3 className="ui-sectionTitle">Recent notes & reports</h3>
-                {loadingOverview ? <div style={{ opacity: 0.85 }}>Loading…</div> : null}
-                {overview?.reports?.length ? (
-                  <div className="ui-stack" style={{ gap: 12 }}>
-                    {overview.reports.map((r) => (
-                      <div key={r.id} style={{ textAlign: 'left' }}>
-                        <div className="ui-helpText" style={{ marginBottom: 4 }}>
-                          {shortDate(r.createdAt)} • score: {r.progressScore}
-                        </div>
-                        <div style={{ whiteSpace: 'pre-wrap' }}>{String(r.notes || '').slice(0, 160)}</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="ui-helpText">No notes yet.</div>
-                )}
-              </Card>
-
-              <Card id="section-sessions" className="ui-sectionCard" style={{ flex: '1 1 320px' }}>
-                <h3 className="ui-sectionTitle">Recent sessions</h3>
-                {loadingOverview ? <div style={{ opacity: 0.85 }}>Loading…</div> : null}
-                {overview?.sessions?.length ? (
-                  <div className="ui-stack" style={{ gap: 10 }}>
-                    {overview.sessions.map((s) => (
-                      <div key={s.id} className="ui-row" style={{ justifyContent: 'space-between', gap: 12 }}>
-                        <div style={{ fontWeight: 700 }}>{shortDate(s.date)}</div>
-                        <div className="ui-helpText">{normalizeSessionStatus(s.status)}</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="ui-helpText">No sessions yet.</div>
-                )}
-              </Card>
-            </div>
           ) : null}
 
           {isCoordinator ? (
-            <div className="ui-row" style={{ alignItems: 'stretch', marginTop: 12 }}>
-              <Card className="ui-sectionCard" style={{ flex: '1 1 520px' }}>
-                <h3 className="ui-sectionTitle">Progress timeline</h3>
-                {overview?.reports?.length ? <ProgressTimeline items={overview.reports} /> : <div className="ui-helpText">No scores yet.</div>}
-              </Card>
-
-              <Card className="ui-sectionCard" style={{ flex: '1 1 320px' }}>
-                <h3 className="ui-sectionTitle">Attendance (from sessions)</h3>
-                {overview?.sessions?.length ? (
-                  <div className="ui-stack" style={{ gap: 10, textAlign: 'left' }}>
-                    {(() => {
-                      const sessions = overview.sessions
-                      let attended = 0
-                      let cancelled = 0
-                      let confirmed = 0
-                      let planned = 0
-                      for (const s of sessions) {
-                        const st = normalizeSessionStatus(s.status)
-                        if (st === 'completed') attended += 1
-                        else if (st === 'cancelled') cancelled += 1
-                        else if (st === 'confirmed') confirmed += 1
-                        else planned += 1
-                      }
-                      return (
-                        <>
-                          <div className="ui-helpText">
-                            Sessions in this list: <strong>{sessions.length}</strong>
-                          </div>
-                          <div className="ui-helpText" style={{ lineHeight: 1.65 }}>
-                            <strong>Attended</strong> (completed): <strong>{attended}</strong>
-                            <br />
-                            <strong>Cancelled</strong>: <strong>{cancelled}</strong>
-                            <br />
-                            <strong>Confirmed</strong> (booked): <strong>{confirmed}</strong>
-                            <br />
-                            <strong>Planned</strong> (scheduled): <strong>{planned}</strong>
-                          </div>
-                        </>
-                      )
-                    })()}
-                    <div className="ui-helpText">
-                      Each session has one status: <code>scheduled</code>, <code>confirmed</code>, <code>completed</code>, or{' '}
-                      <code>cancelled</code>. Update them in <strong>Sessions</strong> (Coordinator) or <strong>Support sessions</strong>{' '}
-                      (Teacher).
-                    </div>
-                  </div>
-                ) : (
-                  <div className="ui-helpText">No sessions yet.</div>
-                )}
-              </Card>
-            </div>
-          ) : null}
-
-          {isCoordinator ? (
-            <div className="ui-row" style={{ alignItems: 'stretch', marginTop: 12 }}>
-              <Card className="ui-sectionCard" style={{ flex: '1 1 520px', textAlign: 'left' }}>
-                <h3 className="ui-sectionTitle">Documents (IEP PDF)</h3>
+            <div className="ui-row" style={{ alignItems: 'stretch', marginTop: 16, gap: 16 }}>
+              <Card className="ui-sectionCard" style={{ flex: '1 1 320px', textAlign: 'left' }}>
+                <h3 className="ui-sectionTitle">IEP documents (PDF)</h3>
                 {docsError ? (
                   <div className="ui-alert ui-alertError ui-textErrorStrong" role="alert">
                     {docsError}
@@ -644,33 +444,30 @@ export function StudentProfilePage() {
                         setDocs((next.documents || []) as DocumentRow[])
                         if (titleEl) titleEl.value = ''
                         if (fileEl) fileEl.value = ''
-                      } catch (err: any) {
-                        setDocsError(err?.message || 'Upload failed')
+                      } catch (err: unknown) {
+                        setDocsError(err instanceof Error ? err.message : 'Upload failed')
                       } finally {
                         setUploading(false)
                       }
                     })()
                   }}
-                  style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}
+                  className="ui-studentProfileForm"
                 >
-                  <input name="title" placeholder="Title (e.g., IEP 2026)" className="ui-input" style={{ minWidth: 220 }} />
-                  <input name="file" type="file" accept="application/pdf" />
+                  <input name="title" placeholder="Document title" className="ui-input" />
+                  <input name="file" type="file" accept="application/pdf" className="ui-input" />
                   <Button type="submit" disabled={uploading}>
                     {uploading ? 'Uploading…' : 'Upload PDF'}
                   </Button>
                 </form>
-
                 {docs.length ? (
-                  <div className="ui-stack" style={{ gap: 10 }}>
+                  <ul className="ui-studentProfileList" style={{ marginTop: 12 }}>
                     {docs.map((d) => (
-                      <div key={d.id} className="ui-row" style={{ justifyContent: 'space-between', gap: 12 }}>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontWeight: 750 }}>{d.title || d.fileName}</div>
-                          <div className="ui-helpText">
-                            {shortDate(d.createdAt)} • {d.fileName}
-                          </div>
-                        </div>
-                        <div className="ui-actionsRow" style={{ justifyContent: 'flex-end' }}>
+                      <li key={d.id} className="ui-row" style={{ justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                        <span>
+                          <strong>{d.title || d.fileName}</strong>
+                          <span className="ui-helpText"> — {shortDate(d.createdAt)}</span>
+                        </span>
+                        <span className="ui-actionsRow">
                           <Button
                             type="button"
                             variant="ghost"
@@ -681,8 +478,8 @@ export function StudentProfilePage() {
                                 try {
                                   const r = await api.studentDocumentDownloadUrl(token, studentId, d.id)
                                   if (r.url) window.open(r.url, '_blank', 'noopener,noreferrer')
-                                } catch (e: any) {
-                                  setDocsError(e?.message || 'Download failed')
+                                } catch (e: unknown) {
+                                  setDocsError(e instanceof Error ? e.message : 'Download failed')
                                 }
                               })()
                             }}
@@ -701,8 +498,8 @@ export function StudentProfilePage() {
                                   await api.studentDeleteDocument(token, studentId, d.id)
                                   const next = await api.studentDocuments(token, studentId)
                                   setDocs((next.documents || []) as DocumentRow[])
-                                } catch (e: any) {
-                                  setDocsError(e?.message || 'Delete failed')
+                                } catch (e: unknown) {
+                                  setDocsError(e instanceof Error ? e.message : 'Delete failed')
                                 } finally {
                                   setUploading(false)
                                 }
@@ -711,26 +508,22 @@ export function StudentProfilePage() {
                           >
                             Delete
                           </Button>
-                        </div>
-                      </div>
+                        </span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 ) : (
-                  <div className="ui-helpText">No documents uploaded yet.</div>
+                  <p className="ui-helpText">No PDFs uploaded yet.</p>
                 )}
-                <div className="ui-helpText" style={{ marginTop: 10 }}>
-                  Requires a Supabase Storage bucket named <code>student-documents</code> (private is OK).
-                </div>
               </Card>
 
-              <Card className="ui-sectionCard" style={{ flex: '1 1 360px', textAlign: 'left' }}>
+              <Card className="ui-sectionCard" style={{ flex: '1 1 320px', textAlign: 'left' }}>
                 <h3 className="ui-sectionTitle">Emergency contacts</h3>
                 {contactsError ? (
                   <div className="ui-alert ui-alertError ui-textErrorStrong" role="alert">
                     {contactsError}
                   </div>
                 ) : null}
-
                 <form
                   onSubmit={(e) => {
                     e.preventDefault()
@@ -739,6 +532,12 @@ export function StudentProfilePage() {
                     const fd = new FormData(formEl)
                     const name = String(fd.get('name') || '').trim()
                     if (name.length < 2) return
+                    const phoneRaw = String(fd.get('phone') || '').trim()
+                    const phoneNorm = normalizePhoneForApi(phoneRaw)
+                    if (!phoneNorm.ok) {
+                      setContactsError(phoneNorm.message)
+                      return
+                    }
                     setSavingContact(true)
                     setContactsError(null)
                     void (async () => {
@@ -746,7 +545,7 @@ export function StudentProfilePage() {
                         await api.studentCreateContact(token, studentId, {
                           name,
                           relation: String(fd.get('relation') || '').trim() || undefined,
-                          phone: String(fd.get('phone') || '').trim() || undefined,
+                          phone: phoneNorm.e164 || undefined,
                           email: String(fd.get('email') || '').trim() || undefined,
                           notes: String(fd.get('notes') || '').trim() || undefined,
                           isEmergency: true,
@@ -754,34 +553,46 @@ export function StudentProfilePage() {
                         const next = await api.studentContacts(token, studentId)
                         setContacts((next.contacts || []) as Contact[])
                         formEl.reset()
-                      } catch (err: any) {
-                        setContactsError(err?.message || 'Save failed')
+                      } catch (err: unknown) {
+                        setContactsError(err instanceof Error ? err.message : 'Save failed')
                       } finally {
                         setSavingContact(false)
                       }
                     })()
                   }}
-                  style={{ display: 'grid', gap: 10, marginBottom: 12 }}
+                  className="ui-studentProfileForm"
                 >
-                  <input name="name" placeholder="Name" className="ui-input" />
-                  <input name="relation" placeholder="Relation (e.g., Mother)" className="ui-input" />
-                  <input name="phone" placeholder="Phone" className="ui-input" />
-                  <input name="email" placeholder="Email" className="ui-input" />
+                  <input name="name" placeholder="Name" className="ui-input" required minLength={2} />
+                  <input name="relation" placeholder="Relation (e.g. Mother)" className="ui-input" />
+                  <input
+                    name="phone"
+                    placeholder={`+${PHONE_INPUT_PLACEHOLDER}`}
+                    className="ui-input"
+                    inputMode="tel"
+                  />
+                  <input name="email" placeholder="Email (optional)" className="ui-input" />
                   <input name="notes" placeholder="Notes (optional)" className="ui-input" />
                   <Button type="submit" disabled={savingContact}>
                     {savingContact ? 'Saving…' : 'Add contact'}
                   </Button>
                 </form>
-
                 {contacts.length ? (
-                  <div className="ui-stack" style={{ gap: 10 }}>
+                  <ul className="ui-studentProfileList" style={{ marginTop: 12 }}>
                     {contacts.map((c) => (
-                      <Card key={c.id} className="ui-cardSoft" style={{ padding: 12 }}>
-                        <div className="ui-row" style={{ justifyContent: 'space-between', gap: 10 }}>
-                          <div style={{ fontWeight: 800 }}>{c.name}</div>
+                      <li key={c.id}>
+                        <div className="ui-row" style={{ justifyContent: 'space-between', gap: 8 }}>
+                          <div>
+                            <strong>{c.name}</strong>
+                            {c.relation ? <span className="ui-helpText"> — {c.relation}</span> : null}
+                            <div className="ui-helpText" style={{ display: 'block', marginTop: 4 }}>
+                              {[c.phone ? formatPhoneDisplay(c.phone) : null, c.email].filter(Boolean).join(' · ') ||
+                                '—'}
+                            </div>
+                          </div>
                           <Button
                             type="button"
                             variant="ghost"
+                            disabled={savingContact}
                             onClick={() => {
                               if (!token) return
                               setSavingContact(true)
@@ -790,28 +601,22 @@ export function StudentProfilePage() {
                                   await api.studentDeleteContact(token, studentId, c.id)
                                   const next = await api.studentContacts(token, studentId)
                                   setContacts((next.contacts || []) as Contact[])
-                                } catch (e: any) {
-                                  setContactsError(e?.message || 'Delete failed')
+                                } catch (e: unknown) {
+                                  setContactsError(e instanceof Error ? e.message : 'Delete failed')
                                 } finally {
                                   setSavingContact(false)
                                 }
                               })()
                             }}
                           >
-                            Delete
+                            Remove
                           </Button>
                         </div>
-                        <div className="ui-helpText">
-                          {c.relation ? `${c.relation} • ` : ''}
-                          {c.phone ? `${c.phone} • ` : ''}
-                          {c.email ? c.email : ''}
-                        </div>
-                        {c.notes ? <div className="ui-helpText" style={{ marginTop: 6 }}>{c.notes}</div> : null}
-                      </Card>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 ) : (
-                  <div className="ui-helpText">No contacts added yet.</div>
+                  <p className="ui-helpText">No contacts yet.</p>
                 )}
               </Card>
             </div>
@@ -819,11 +624,11 @@ export function StudentProfilePage() {
         </>
       ) : !loading && !error ? (
         <div className="ui-emptyState">
-          <div className="ui-emptyTitle">Student not loaded</div>
-          <p className="ui-emptyText">Open a student profile from the Students list.</p>
+          <div className="ui-emptyTitle">Student not found</div>
+          <p className="ui-emptyText">Open a student from the Students list.</p>
         </div>
       ) : null}
+      {confirmDialog}
     </div>
   )
 }
-

@@ -5,7 +5,7 @@ import { AuthLayout } from '@/mvc/views/components/auth/AuthLayout'
 import { Button } from '@/mvc/views/components/ui/Button'
 import { TextInput } from '@/mvc/views/components/ui/forms/TextInput'
 import { useToast } from '@/mvc/views/components/useToast'
-import { REGISTER_PASSWORD_HINT, meetsRegisterPasswordRules } from '@/utils/passwordRules'
+import { meetsRegisterPasswordRules } from '@/utils/passwordRules'
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -28,21 +28,14 @@ export function ResetPasswordPage() {
     [token, password, confirm, loading],
   )
 
-  const policyHint = REGISTER_PASSWORD_HINT
-
   return (
     <AuthLayout>
       <h2 className="auth-stepTitle">Choose a new password</h2>
-      <p className="auth-stepLead">Paste your reset token below if your link didn’t carry it automatically. {policyHint}</p>
 
       {!token ? (
-        <p className="auth-stepLead" style={{ color: '#9f1239' }}>
-          This page needs a reset token. Request a reset from{' '}
-          <Link to="/forgot-password" className="ui-dashLink">
-            Reset password
-          </Link>{' '}
-          or open the link from your email again.
-        </p>
+        <div className="login-error" role="alert">
+          <div className="login-errorTitle">Missing reset token.</div>
+        </div>
       ) : (
         <form
           className="auth-form login-form"
@@ -99,9 +92,8 @@ export function ResetPasswordPage() {
             </Link>
           </p>
           {password && confirm && password !== confirm ? (
-            <p className="login-errorHint">Passwords do not match.</p>
+            <div className="login-errorTitle">Passwords do not match.</div>
           ) : null}
-          {password && !meetsRegisterPasswordRules(password) ? <p className="login-errorHint">{policyHint}</p> : null}
           {error ? (
             <div className="login-error" role="alert">
               <div className="login-errorTitle">{error}</div>

@@ -25,4 +25,19 @@ router.patch(
   supportController.updateSupportRequest,
 );
 
+router.delete(
+  '/requests/:id',
+  requireAuth,
+  requireRole(['manager', 'super_admin']),
+  supportController.deleteSupportRequest,
+);
+
+/** Fallback when proxies or an old process block DELETE; same handler as DELETE. */
+router.post(
+  '/requests/:id/delete',
+  requireAuth,
+  requireRole(['manager', 'super_admin']),
+  supportController.deleteSupportRequest,
+);
+
 module.exports = router;

@@ -137,18 +137,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token,
       loading,
       refreshUser: async () => {
-        if (!token) return
-        try {
-          if (isJwtExpired(token)) {
-            await clearSession()
-            return
-          }
-          const res = await api.me(token)
-          setUser(res.user)
-          await AsyncStorage.setItem(STORAGE_USER, JSON.stringify(res.user))
-        } catch {
-          /* keep existing user */
+        if (!token) throw new Error('Not signed in')
+        if (isJwtExpired(token)) {
+          await clearSession()
+          throw new Error('Session expired. Please sign in again.')
         }
+        const res = await api.me(token)
+        setUser(res.user)
+        await AsyncStorage.setItem(STORAGE_USER, JSON.stringify(res.user))
       },
       login: async ({ email, password, role }) => {
         const res = await api.login({ email, password, role })

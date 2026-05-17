@@ -98,11 +98,7 @@ export function AdminRegistrationRequestsPage() {
     <div className="ui-page">
       <div className="ui-pageHeader">
         <h1 className="ui-pageTitle">Registration requests</h1>
-        <p className="ui-pageLead">
-          Pending <strong>School Admin</strong> sign-ups only (other roles register instantly). Approve or reject here;
-          approval creates the account with the password they chose. You may change the assigned role before approving.
-        </p>
-      </div>
+</div>
 
       <Card>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 16 }}>

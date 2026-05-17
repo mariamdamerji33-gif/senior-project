@@ -1,5 +1,6 @@
 import { createDrawerNavigator } from '@react-navigation/drawer'
 import { useWindowDimensions } from 'react-native'
+import { colors } from '../theme/colors'
 import { ParentDrawerSidebar } from './ParentDrawerSidebar'
 import { ParentActivitiesNavigator } from './ParentActivitiesNavigator'
 import type { ParentDrawerParamList } from './parentDrawerTypes'
@@ -23,7 +24,7 @@ const Drawer = createDrawerNavigator<ParentDrawerParamList>()
 
 export function ParentDrawerNavigator() {
   const { width } = useWindowDimensions()
-  const drawerWidth = width < 390 ? 80 : width >= 768 ? 112 : 92
+  const drawerWidth = width < 390 ? 88 : width >= 768 ? 112 : 96
 
   return (
     <Drawer.Navigator
@@ -35,6 +36,7 @@ export function ParentDrawerNavigator() {
         drawerType: 'permanent',
         /** Purple rail: navigation only (alerts live on the Today home card, top right). */
         drawerPosition: 'left',
+        sceneContainerStyle: { flex: 1, backgroundColor: colors.pageBg },
         drawerStyle: {
           width: drawerWidth,
           backgroundColor: 'transparent',

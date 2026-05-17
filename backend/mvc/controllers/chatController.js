@@ -64,6 +64,34 @@ function imageMessageText({ path, mimeType, sizeBytes }) {
   return `[[chat-image]]${JSON.stringify({ path, mimeType, sizeBytes })}`;
 }
 
+function storageAttachmentFromBody(body) {
+  const text = String(body || '');
+  if (text.startsWith('[[voice-note]]')) {
+    try {
+      const { path } = JSON.parse(text.replace('[[voice-note]]', ''));
+      if (path) return { bucket: 'chat-voice-notes', path: String(path) };
+    } catch {
+      /* ignore */
+    }
+  }
+  if (text.startsWith('[[chat-image]]')) {
+    try {
+      const { path } = JSON.parse(text.replace('[[chat-image]]', ''));
+      if (path) return { bucket: 'chat-images', path: String(path) };
+    } catch {
+      /* ignore */
+    }
+  }
+  return null;
+}
+
+async function removeStorageAttachment(childId, body) {
+  const att = storageAttachmentFromBody(body);
+  if (!att || !att.path.startsWith(`students/${childId}/`)) return;
+  ensureStorageReady();
+  await supabaseAdmin.storage.from(att.bucket).remove([att.path]);
+}
+
 async function listMessages(req, res) {
   try {
     const childId = normalizeChildIdQuery(req);
@@ -325,4 +353,67 @@ async function getChatImageUrl(req, res) {
   }
 }
 
-module.exports = { listMessages, createMessage, uploadVoiceNote, getVoiceNoteUrl, uploadChatImage, getChatImageUrl };
+async function deleteMessage(req, res) {
+  try {
+    const id = String(req.params.id || '').trim();
+    const childId = normalizeChildIdQuery(req);
+    if (!id || !childId) return res.status(400).json({ error: 'id and childId are required' });
+
+    const gate = await assertCanAccessChat(req, childId);
+    if (!gate.ok) return res.status(gate.status).json({ error: gate.error });
+
+    let existing;
+    try {
+      existing = await chatMessageModel.findById(id);
+    } catch (e) {
+      if (isMissingChatTable(e)) {
+        return res.status(503).json({
+          error: 'Chat table is not set up yet.',
+          hint: 'In Supabase → SQL Editor, run the script `supabase/chat_messages.sql` from this project, then try again.',
+        });
+      }
+      throw e;
+    }
+    if (!existing) return res.status(404).json({ error: 'Message not found' });
+    if (String(existing.childId) !== childId) {
+      return res.status(403).json({ error: 'Message does not belong to this child thread' });
+    }
+
+    const uid = String(req.auth.sub ?? '').trim();
+    const role = req.auth?.role;
+    const isOwner = sameId(existing.senderId, uid);
+    const canDelete =
+      isSuperAdmin(req) || (role === 'therapist' && gate.ok) || (role === 'parent' && gate.ok && isOwner);
+    if (!canDelete) {
+      return res.status(403).json({ error: 'You can only delete your own messages' });
+    }
+
+    try {
+      await removeStorageAttachment(childId, existing.text);
+    } catch (storageErr) {
+      // Message row delete still proceeds if storage cleanup fails (e.g. file already gone).
+      console.warn('chat delete storage cleanup:', storageErr?.message || storageErr);
+    }
+
+    await chatMessageModel.deleteById(id);
+    res.json({ ok: true });
+  } catch (err) {
+    if (err.code === 'MISSING_SERVICE_ROLE') {
+      return res.status(503).json({
+        error: err.message,
+        hint: 'Project Settings → API → copy the service_role key into backend/.env as SUPABASE_SERVICE_ROLE_KEY.',
+      });
+    }
+    res.status(500).json({ error: err.message || 'Failed to delete message' });
+  }
+}
+
+module.exports = {
+  listMessages,
+  createMessage,
+  deleteMessage,
+  uploadVoiceNote,
+  getVoiceNoteUrl,
+  uploadChatImage,
+  getChatImageUrl,
+};

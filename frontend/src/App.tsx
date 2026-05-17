@@ -9,15 +9,15 @@ import { DashboardLanding } from '@/mvc/views/pages/DashboardLanding'
 import { LoginPage } from '@/mvc/views/pages/LoginPage'
 import { RegisterPage } from '@/mvc/views/pages/RegisterPage'
 import { FamilyMobileOnlyPage } from '@/mvc/views/pages/FamilyMobileOnlyPage'
-import { TherapistChildrenPage } from '@/mvc/views/pages/therapist/TherapistChildrenPage'
-import { TherapistReportsPage } from '@/mvc/views/pages/therapist/TherapistReportsPage'
-import { TherapistActivitiesPage } from '@/mvc/views/pages/therapist/TherapistActivitiesPage'
-import { TherapistProgressPage } from '@/mvc/views/pages/therapist/TherapistProgressPage'
-import { TherapistSessionsPage } from '@/mvc/views/pages/therapist/TherapistSessionsPage'
-import { TherapistChatPage } from '@/mvc/views/pages/therapist/TherapistChatPage'
-import { TherapistTreatmentPlansPage } from '@/mvc/views/pages/therapist/TherapistTreatmentPlansPage'
-import { TherapistDailyCheckinsPage } from '@/mvc/views/pages/therapist/TherapistDailyCheckinsPage'
-import { TherapistParentStepsPage } from '@/mvc/views/pages/therapist/TherapistParentStepsPage'
+import { TeacherChildrenPage } from '@/mvc/views/pages/teacher/TeacherChildrenPage'
+import { TeacherReportsPage } from '@/mvc/views/pages/teacher/TeacherReportsPage'
+import { TeacherActivitiesPage } from '@/mvc/views/pages/teacher/TeacherActivitiesPage'
+import { TeacherProgressPage } from '@/mvc/views/pages/teacher/TeacherProgressPage'
+import { TeacherSessionsPage } from '@/mvc/views/pages/teacher/TeacherSessionsPage'
+import { TeacherChatPage } from '@/mvc/views/pages/teacher/TeacherChatPage'
+import { TeacherTreatmentPlansPage } from '@/mvc/views/pages/teacher/TeacherTreatmentPlansPage'
+import { TeacherDailyCheckinsPage } from '@/mvc/views/pages/teacher/TeacherDailyCheckinsPage'
+import { TeacherParentStepsPage } from '@/mvc/views/pages/teacher/TeacherParentStepsPage'
 import { AdminAnalyticsPage } from '@/mvc/views/pages/admin/AdminAnalyticsPage'
 import { AdminUsersPage } from '@/mvc/views/pages/admin/AdminUsersPage'
 import { AdminRegistrationRequestsPage } from '@/mvc/views/pages/admin/AdminRegistrationRequestsPage'
@@ -34,6 +34,7 @@ import { NotFoundPage } from '@/mvc/views/pages/NotFoundPage'
 import { ForgotPasswordPage } from '@/mvc/views/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/mvc/views/pages/ResetPasswordPage'
 import { AccountProfilePage } from '@/mvc/views/pages/AccountProfilePage'
+import { SiteLaunchGate } from '@/mvc/views/components/SiteLaunchGate'
 const familyWebRedirect = <Navigate to="/family-app" replace />
 
 export default function App() {
@@ -42,6 +43,7 @@ export default function App() {
       <ToastProvider>
         <A11yUiPrefsProvider>
         <BrowserRouter>
+          <SiteLaunchGate>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -134,7 +136,7 @@ export default function App() {
               <Route
                 path="sessions"
                 element={
-                  <RoleGuard allowedRoles={['manager', 'super_admin']}>
+                  <RoleGuard allowedRoles={['super_admin']}>
                     <ManagerSessionsPage />
                   </RoleGuard>
                 }
@@ -142,7 +144,7 @@ export default function App() {
               <Route
                 path="reports"
                 element={
-                  <RoleGuard allowedRoles={['manager', 'super_admin']}>
+                  <RoleGuard allowedRoles={['super_admin']}>
                     <ManagerReportsPage />
                   </RoleGuard>
                 }
@@ -152,7 +154,7 @@ export default function App() {
                 path="children"
                 element={
                   <RoleGuard allowedRoles={['therapist', 'super_admin']}>
-                    <TherapistChildrenPage />
+                    <TeacherChildrenPage />
                   </RoleGuard>
                 }
               />
@@ -160,66 +162,74 @@ export default function App() {
                 path="activities"
                 element={
                   <RoleGuard allowedRoles={['therapist', 'super_admin']}>
-                    <TherapistActivitiesPage />
+                    <TeacherActivitiesPage />
                   </RoleGuard>
                 }
               />
               <Route
-                path="therapist-reports"
+                path="teacher-reports"
                 element={
                   <RoleGuard allowedRoles={['therapist', 'super_admin']}>
-                    <TherapistReportsPage />
+                    <TeacherReportsPage />
                   </RoleGuard>
                 }
               />
               <Route
-                path="therapist-progress"
+                path="teacher-progress"
                 element={
                   <RoleGuard allowedRoles={['therapist', 'super_admin']}>
-                    <TherapistProgressPage />
+                    <TeacherProgressPage />
                   </RoleGuard>
                 }
               />
               <Route
-                path="therapist-sessions"
+                path="teacher-sessions"
                 element={
                   <RoleGuard allowedRoles={['therapist', 'super_admin']}>
-                    <TherapistSessionsPage />
+                    <TeacherSessionsPage />
                   </RoleGuard>
                 }
               />
               <Route
-                path="therapist-chat"
+                path="teacher-chat"
                 element={
                   <RoleGuard allowedRoles={['therapist', 'super_admin']}>
-                    <TherapistChatPage />
+                    <TeacherChatPage />
                   </RoleGuard>
                 }
               />
               <Route
-                path="therapist-treatment"
+                path="teacher-treatment"
                 element={
                   <RoleGuard allowedRoles={['therapist', 'super_admin']}>
-                    <TherapistTreatmentPlansPage />
+                    <TeacherTreatmentPlansPage />
                   </RoleGuard>
                 }
               />
               <Route
-                path="therapist-daily-checkins"
+                path="teacher-daily-checkins"
                 element={
                   <RoleGuard allowedRoles={['therapist', 'super_admin']}>
-                    <TherapistDailyCheckinsPage />
+                    <TeacherDailyCheckinsPage />
                   </RoleGuard>
                 }
               />
               <Route
-                path="therapist-steps"
+                path="teacher-steps"
                 element={
                   <RoleGuard allowedRoles={['therapist', 'super_admin']}>
-                    <TherapistParentStepsPage />
+                    <TeacherParentStepsPage />
                   </RoleGuard>
                 }
               />
+
+              <Route path="therapist-reports" element={<Navigate to="/dashboard/teacher-reports" replace />} />
+              <Route path="therapist-progress" element={<Navigate to="/dashboard/teacher-progress" replace />} />
+              <Route path="therapist-sessions" element={<Navigate to="/dashboard/teacher-sessions" replace />} />
+              <Route path="therapist-chat" element={<Navigate to="/dashboard/teacher-chat" replace />} />
+              <Route path="therapist-treatment" element={<Navigate to="/dashboard/teacher-treatment" replace />} />
+              <Route path="therapist-daily-checkins" element={<Navigate to="/dashboard/teacher-daily-checkins" replace />} />
+              <Route path="therapist-steps" element={<Navigate to="/dashboard/teacher-steps" replace />} />
 
               <Route path="parent-daily-checkin" element={familyWebRedirect} />
               <Route path="child-space" element={familyWebRedirect} />
@@ -234,6 +244,7 @@ export default function App() {
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+          </SiteLaunchGate>
         </BrowserRouter>
         </A11yUiPrefsProvider>
       </ToastProvider>

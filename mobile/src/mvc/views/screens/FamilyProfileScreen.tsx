@@ -28,17 +28,28 @@ export function ParentAccountProfileScreen({ navigation }: DrawerScreenProps<Par
   const { confirm, confirmDialog } = useConfirmDialog()
   const isEn = language === 'en'
   const [pullRefreshing, setPullRefreshing] = useState(false)
+  const [refreshError, setRefreshError] = useState<string | null>(null)
 
   useFocusEffect(
     useCallback(() => {
-      void refreshUser()
-    }, [refreshUser]),
+      void (async () => {
+        setRefreshError(null)
+        try {
+          await refreshUser()
+        } catch (e: unknown) {
+          setRefreshError(e instanceof Error ? e.message : isEn ? 'Could not refresh profile.' : 'تعذر تحديث الملف.')
+        }
+      })()
+    }, [refreshUser, isEn]),
   )
 
   async function onPullRefresh() {
     setPullRefreshing(true)
+    setRefreshError(null)
     try {
       await refreshUser()
+    } catch (e: unknown) {
+      setRefreshError(e instanceof Error ? e.message : isEn ? 'Could not refresh profile.' : 'تعذر تحديث الملف.')
     } finally {
       setPullRefreshing(false)
     }
@@ -64,7 +75,13 @@ export function ParentAccountProfileScreen({ navigation }: DrawerScreenProps<Par
     cancel: isEn ? 'Cancel' : 'إلغاء',
     logoutLink: isEn ? 'Log out' : 'تسجيل الخروج',
     logoutHint: isEn ? 'End session on this device' : 'إنهاء الجلسة على هذا الجهاز',
+    photo: isEn ? 'Profile photo' : 'صورة الملف',
+    photoSchoolHint: isEn
+      ? 'Your school coordinator adds or updates this on the website. Pull down to refresh after they save.'
+      : 'يضيفها أو يحدّثها المنسق من الموقع. اسحب للأسفل للتحديث بعد الحفظ.',
   }
+
+  const hasPhoto = Boolean(user?.profilePhotoUrl?.trim())
 
   return (
     <ScreenScrollPage
@@ -77,31 +94,42 @@ export function ParentAccountProfileScreen({ navigation }: DrawerScreenProps<Par
       refreshing={pullRefreshing}
       onRefresh={onPullRefresh}
     >
-      <ScreenCard>
-        <View style={[styles.row, isArabic && styles.rowRtl]}>
-          <View style={styles.avatarWrap}>
-            {user?.profilePhotoUrl ? (
-              <Image source={{ uri: user.profilePhotoUrl }} style={styles.avatarImg} />
-            ) : (
-              <Text style={styles.avatarTxt}>{initials(user?.name)}</Text>
-            )}
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[styles.name, isArabic && styles.rtl]}>{user?.name || user?.email || '—'}</Text>
-            <Text style={[styles.meta, isArabic && styles.rtl]}>
-              {copy.role}: {user?.roleLabel || user?.role || '—'}
-            </Text>
-            <Text style={[styles.meta, isArabic && styles.rtl]}>
-              {copy.email}: {user?.email || '—'}
-            </Text>
-            {typeof user?.ageYears === 'number' ? (
-              <Text style={[styles.meta, isArabic && styles.rtl]}>
-                {copy.age}: {user.ageYears}
-                {user.birthDate ? ` (${user.birthDate})` : ''}
-              </Text>
-            ) : null}
-          </View>
+      {refreshError ? (
+        <View style={styles.refreshErrorBox}>
+          <Text style={[styles.refreshErrorText, isArabic && styles.rtl]}>{refreshError}</Text>
         </View>
+      ) : null}
+
+      <View style={styles.avatarHero}>
+        <Text style={[styles.avatarLabel, isArabic && styles.rtl]}>{copy.photo}</Text>
+        <View style={styles.avatarWrapLarge}>
+          {hasPhoto ? (
+            <Image source={{ uri: user!.profilePhotoUrl! }} style={styles.avatarImgLarge} />
+          ) : (
+            <Text style={styles.avatarTxtLarge}>{initials(user?.name)}</Text>
+          )}
+        </View>
+        {!hasPhoto ? (
+          <Text style={[styles.avatarHint, isArabic && styles.rtl]}>{copy.photoSchoolHint}</Text>
+        ) : null}
+      </View>
+
+      <ScreenCard>
+        <Text style={[styles.name, isArabic && styles.rtl, styles.nameCentered]}>
+          {user?.name || user?.email || '—'}
+        </Text>
+        <Text style={[styles.meta, isArabic && styles.rtl, styles.metaCentered]}>
+          {copy.role}: {user?.roleLabel || user?.role || '—'}
+        </Text>
+        <Text style={[styles.meta, isArabic && styles.rtl, styles.metaCentered]}>
+          {copy.email}: {user?.email || '—'}
+        </Text>
+        {typeof user?.ageYears === 'number' ? (
+          <Text style={[styles.meta, isArabic && styles.rtl, styles.metaCentered]}>
+            {copy.age}: {user.ageYears}
+            {user.birthDate ? ` (${user.birthDate})` : ''}
+          </Text>
+        ) : null}
 
         <Text style={[styles.label, isArabic && styles.rtl, { marginTop: 14 }]}>{copy.phone}</Text>
         <Text style={[styles.readonlyLine, isArabic && styles.rtl]}>{user?.phone?.trim() ? user.phone : '—'}</Text>
@@ -155,24 +183,64 @@ export function ParentAccountProfileScreen({ navigation }: DrawerScreenProps<Par
 }
 
 const styles = StyleSheet.create({
+  refreshErrorBox: {
+    backgroundColor: '#fef2f2',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    padding: 12,
+    marginBottom: 4,
+  },
+  refreshErrorText: { color: '#b91c1c', fontWeight: '700', fontSize: 14, lineHeight: 20 },
   rtl: { textAlign: 'right', writingDirection: 'rtl' },
-  row: { flexDirection: 'row', gap: 14, alignItems: 'center' },
-  rowRtl: { flexDirection: 'row-reverse' },
-  avatarWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#ede6ff',
+  avatarHero: {
+    alignItems: 'center',
+    marginTop: -52,
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    zIndex: 2,
+  },
+  avatarLabel: {
+    color: '#6d46d4',
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 10,
+  },
+  avatarWrapLarge: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    borderWidth: 4,
+    borderColor: '#fff',
+    shadowColor: '#211a2e',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 14,
+    elevation: 6,
   },
-  avatarImg: { width: 72, height: 72 },
-  avatarTxt: { fontSize: 22, fontWeight: '900', color: '#4c1d95' },
-  name: { fontSize: 17, fontWeight: '900', color: '#24173f' },
-  meta: { marginTop: 4, color: '#5f5573', fontWeight: '600' },
+  avatarImgLarge: { width: 104, height: 104 },
+  avatarTxtLarge: { fontSize: 32, fontWeight: '900', color: '#6d46d4' },
+  avatarHint: {
+    marginTop: 10,
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#534c62',
+    fontWeight: '600',
+    textAlign: 'center',
+    maxWidth: 320,
+  },
+  name: { fontSize: 17, fontWeight: '900', color: '#17131f' },
+  nameCentered: { textAlign: 'center', marginTop: 4 },
+  meta: { marginTop: 4, color: '#534c62', fontWeight: '600' },
+  metaCentered: { textAlign: 'center' },
   label: { fontSize: 12, fontWeight: '800', color: '#6b5a8a', marginBottom: 6 },
-  readonlyLine: { fontSize: 16, fontWeight: '700', color: '#24173f' },
+  readonlyLine: { fontSize: 16, fontWeight: '700', color: '#17131f' },
   profileDivider: {
     height: 1,
     backgroundColor: '#e8e0fb',
@@ -187,7 +255,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   securityRowRtl: { flexDirection: 'row-reverse' },
-  securityRowTitle: { fontSize: 16, fontWeight: '800', color: '#24173f' },
+  securityRowTitle: { fontSize: 16, fontWeight: '800', color: '#17131f' },
   securityRowHint: { marginTop: 4, fontSize: 13, fontWeight: '600', color: '#6b5a8a' },
   securityChevron: { fontSize: 22, fontWeight: '300', color: '#8b7cb8' },
   logoutRow: {

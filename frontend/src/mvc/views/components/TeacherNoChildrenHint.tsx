@@ -1,7 +1,7 @@
 import { Card } from './ui/Card'
 import { useAuth } from '@/mvc/controllers'
 
-export function TherapistNoChildrenHint() {
+export function TeacherNoChildrenHint() {
   const { user } = useAuth()
 
   return (

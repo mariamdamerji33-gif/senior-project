@@ -20,6 +20,13 @@ router.post(
   requireServiceRole,
   chatController.createMessage,
 );
+router.delete(
+  '/messages/:id',
+  requireAuth,
+  requireRole(['parent', 'therapist', 'super_admin']),
+  requireServiceRole,
+  chatController.deleteMessage,
+);
 router.post(
   '/voice-note',
   requireAuth,

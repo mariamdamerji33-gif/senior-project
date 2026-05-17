@@ -256,8 +256,8 @@ For final delivery, use these files:
 1. Login and role-based dashboards  
 2. School admin / coordinator management (users, students, sessions)  
 3. Teacher: sessions, reports, progress, family steps  
-4. Family: daily update, child space, progress, chat  
-5. Mobile app against the same API  
+4. Family: mobile app (check-in, activities, progress, chat) — `/family-app` on web explains mobile-only access  
+5. Same API for web staff and mobile families  
 
 ## Architecture (short)
 

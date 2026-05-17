@@ -56,9 +56,15 @@ async function listRequests(status = 'all') {
 }
 
 async function updateStatus(id, status) {
+  const patch = { status };
+  if (status === 'resolved') {
+    patch.message = '';
+    patch.child_id = null;
+  }
+
   const { data, error } = await db()
     .from('support_requests')
-    .update({ status })
+    .update(patch)
     .eq('id', id)
     .select('id,user_id,user_email,user_name,role,child_id,subject,message,status,created_at,updated_at')
     .maybeSingle();
@@ -66,4 +72,15 @@ async function updateStatus(id, status) {
   return data ? mapRow(data) : null;
 }
 
-module.exports = { createRequest, listRequests, updateStatus };
+async function deleteRequest(id) {
+  const { data, error } = await db()
+    .from('support_requests')
+    .delete()
+    .eq('id', id)
+    .select('id')
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data?.id);
+}
+
+module.exports = { createRequest, listRequests, updateStatus, deleteRequest };

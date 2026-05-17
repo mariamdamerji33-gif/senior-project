@@ -25,9 +25,10 @@ const TEXT_SCALE: Record<DisplayFontTier, number> = {
 }
 
 const HIGH_CONTRAST_COLORS: AppThemeColors = {
-  primary: '#5b21b6',
-  primaryDark: '#4c1d95',
+  primary: '#1e40af',
+  primaryDark: '#1e3a8a',
   primaryDeep: '#0f172a',
+  calm: '#0f766e',
   secondarySurface: '#f1f5f9',
   secondaryBorder: '#64748b',
   outlineBorder: '#334155',

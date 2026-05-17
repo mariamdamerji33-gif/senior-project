@@ -44,7 +44,7 @@ export function DashboardHeaderTools() {
         return
       }
 
-      const childrenRes = await api.therapistChildren(token)
+      const childrenRes = await api.teacherChildren(token)
       const children = (childrenRes.children || []) as { id: string; name: string }[]
 
       const seen = loadSeen()
@@ -71,7 +71,7 @@ export function DashboardHeaderTools() {
                     title: c.name,
                     body: `${unreadCount} unread message(s) from the family/school chat.`,
                     actionLabel: 'Open chat',
-                    to: '/dashboard/therapist-chat',
+                    to: '/dashboard/teacher-chat',
                   } as NotificationItem)
                 : null
             } catch {
@@ -87,7 +87,7 @@ export function DashboardHeaderTools() {
         await Promise.all(
           children.slice(0, 5).map(async (c) => {
             try {
-              const res = await api.therapistDailyCheckins(token, c.id)
+              const res = await api.teacherDailyCheckins(token, c.id)
               const latest = (res.checkins || [])[0] as { checkin_date?: string; checkinDate?: string } | undefined
               const date = latest?.checkin_date || latest?.checkinDate || ''
               if (date !== today) return null
@@ -97,7 +97,7 @@ export function DashboardHeaderTools() {
                 title: c.name,
                 body: 'Family submitted a daily check-in today.',
                 actionLabel: 'Open check-ins',
-                to: '/dashboard/therapist-daily-checkins',
+                to: '/dashboard/teacher-daily-checkins',
               } as NotificationItem
             } catch {
               return null

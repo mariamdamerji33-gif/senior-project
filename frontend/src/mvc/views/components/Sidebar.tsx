@@ -160,7 +160,7 @@ function iconForPath(to: string) {
   if (to.includes('treatment')) return 'activity'
   if (to.includes('daily-checkin')) return 'calendar'
   if (to.includes('/steps')) return 'info'
-  if (to.includes('therapist-steps')) return 'info'
+  if (to.includes('teacher-steps')) return 'info'
   if (to.includes('support-inbox')) return 'info'
   if (to.includes('parent-daily-checkin')) return 'calendar'
   if (to.includes('parent-chat')) return 'chat'
@@ -192,19 +192,17 @@ const NAV_ITEMS: NavItem[] = [
 
   { to: '/dashboard/users', label: 'Staff & accounts', roles: ['manager'] },
   { to: '/dashboard/children-management', label: 'Students Management', roles: ['manager'] },
-  { to: '/dashboard/sessions', label: 'Sessions', roles: ['manager'] },
-  { to: '/dashboard/reports', label: 'Notes & reports overview', roles: ['manager'] },
   { to: '/dashboard/support-inbox', label: 'Mobile support inbox', roles: ['manager'] },
 
   { to: '/dashboard/children', label: 'Students', roles: ['therapist'] },
-  { to: '/dashboard/therapist-sessions', label: 'Sessions', roles: ['therapist'] },
-  { to: '/dashboard/therapist-progress', label: 'Progress', roles: ['therapist'] },
+  { to: '/dashboard/teacher-sessions', label: 'Sessions', roles: ['therapist'] },
+  { to: '/dashboard/teacher-progress', label: 'Progress', roles: ['therapist'] },
   { to: '/dashboard/activities', label: 'Activities', roles: ['therapist'] },
-  { to: '/dashboard/therapist-reports', label: 'Notes & reports', roles: ['therapist'] },
-  { to: '/dashboard/therapist-treatment', label: 'IEP / Intervention plan', roles: ['therapist'] },
-  { to: '/dashboard/therapist-daily-checkins', label: 'Daily check-ins', roles: ['therapist'] },
-  { to: '/dashboard/therapist-steps', label: 'Steps for families', roles: ['therapist'] },
-  { to: '/dashboard/therapist-chat', label: 'Family chat', roles: ['therapist'] },
+  { to: '/dashboard/teacher-reports', label: 'Notes & reports', roles: ['therapist'] },
+  { to: '/dashboard/teacher-treatment', label: 'IEP / Intervention plan', roles: ['therapist'] },
+  { to: '/dashboard/teacher-daily-checkins', label: 'Daily check-ins', roles: ['therapist'] },
+  { to: '/dashboard/teacher-steps', label: 'Steps for families', roles: ['therapist'] },
+  { to: '/dashboard/teacher-chat', label: 'Family chat', roles: ['therapist'] },
 ]
 
 /** Grouped navigation when Super Admin browses every area (same routes as role-specific users). */
@@ -223,22 +221,20 @@ const SUPER_ADMIN_SECTIONS: { title: string; items: { to: string; label: string 
     items: [
       { to: '/dashboard/users', label: 'Staff & accounts' },
       { to: '/dashboard/children-management', label: 'Students Management' },
-      { to: '/dashboard/sessions', label: 'Sessions' },
-      { to: '/dashboard/reports', label: 'Notes & reports overview' },
     ],
   },
   {
     title: 'Teacher',
     items: [
       { to: '/dashboard/children', label: 'Students' },
-      { to: '/dashboard/therapist-sessions', label: 'Sessions' },
-      { to: '/dashboard/therapist-progress', label: 'Progress' },
+      { to: '/dashboard/teacher-sessions', label: 'Sessions' },
+      { to: '/dashboard/teacher-progress', label: 'Progress' },
       { to: '/dashboard/activities', label: 'Activities' },
-      { to: '/dashboard/therapist-reports', label: 'Notes & reports' },
-      { to: '/dashboard/therapist-treatment', label: 'IEP / Intervention plan' },
-      { to: '/dashboard/therapist-daily-checkins', label: 'Daily check-ins' },
-      { to: '/dashboard/therapist-steps', label: 'Steps for families' },
-      { to: '/dashboard/therapist-chat', label: 'Family chat' },
+      { to: '/dashboard/teacher-reports', label: 'Notes & reports' },
+      { to: '/dashboard/teacher-treatment', label: 'IEP / Intervention plan' },
+      { to: '/dashboard/teacher-daily-checkins', label: 'Daily check-ins' },
+      { to: '/dashboard/teacher-steps', label: 'Steps for families' },
+      { to: '/dashboard/teacher-chat', label: 'Family chat' },
     ],
   },
 ]

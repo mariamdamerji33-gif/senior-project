@@ -9,7 +9,7 @@ const homeRoutes = require('./mvc/routes/homeRoutes');
 const authRoutes = require('./mvc/routes/authRoutes');
 const authController = require('./mvc/controllers/authController');
 const { csrfGuard } = require('./middleware/csrf');
-const therapistRoutes = require('./mvc/routes/therapistRoutes');
+const teacherRoutes = require('./mvc/routes/teacherRoutes');
 const parentRoutes = require('./mvc/routes/parentRoutes');
 const managerRoutes = require('./mvc/routes/managerRoutes');
 const adminRoutes = require('./mvc/routes/adminRoutes');
@@ -164,7 +164,9 @@ app.get('/login', (req, res) => {
       'Open the app from the Vite dev server (e.g. http://localhost:5173/login) or your static host. To log in via API, send POST to /api/auth/login (or POST /login) with JSON { "email", "password", "role" }.',
   });
 });
-app.use('/api/therapist', therapistRoutes);
+app.use('/api/teacher', teacherRoutes);
+/** @deprecated use /api/teacher — kept so older clients keep working until rebuilt */
+app.use('/api/therapist', teacherRoutes);
 app.use('/api/parent', parentRoutes);
 app.use('/api/manager', managerRoutes);
 app.use('/api/admin', adminRoutes);
@@ -206,7 +208,7 @@ app.use((req, res) => {
     path: urlPath,
     hint: doubledApi
       ? 'The URL contains `/api/api/…`. In the frontend `.env`, set `VITE_API_BASE_URL` to the server origin only (e.g. `http://localhost:5000`), not `http://localhost:5000/api`. Paths already include `/api`.'
-      : 'Open /console for a styled API page, or the React app (e.g. port 5173). Auth: POST /api/auth/login. Chat: GET/POST /api/chat/messages.',
+      : 'Open /console for a styled API page, or the React app (e.g. port 5173). Teacher API: GET /api/teacher/overview. Auth: POST /api/auth/login. After pulling code changes, restart the backend (npm start in the backend folder).',
   });
 });
 

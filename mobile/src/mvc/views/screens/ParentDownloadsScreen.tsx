@@ -197,6 +197,6 @@ export function ParentDownloadsScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   btnCenter: { textAlign: 'center' },
   rtl: { textAlign: 'right', writingDirection: 'rtl' },
-  previewTitle: { color: '#2c2144', fontWeight: '900', fontSize: 15 },
-  previewText: { color: '#5f5573', lineHeight: 21, fontWeight: '600' },
+  previewTitle: { color: '#17131f', fontWeight: '900', fontSize: 15 },
+  previewText: { color: '#534c62', lineHeight: 21, fontWeight: '600' },
 })

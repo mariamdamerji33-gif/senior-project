@@ -6,9 +6,7 @@ type Props = {
   children: ReactNode
 }
 
-/**
- * Form + tabs (left) · Brand + dashboard preview (right).
- */
+/** Full-viewport centered auth shell — one page per route (sign in / register). */
 export function AuthLayout({ children }: Props) {
   const location = useLocation()
   const isRegisterPage = location.pathname.startsWith('/register')
@@ -17,8 +15,8 @@ export function AuthLayout({ children }: Props) {
 
   return (
     <div className={'auth-page' + (isRegisterPage ? ' auth-page--register' : '')}>
-      <aside className="auth-side">
-        <div className="auth-sideInner">
+      <div className="auth-shell">
+        <header className="auth-header">
           <img
             className="auth-logo"
             src="/alp-logo.svg"
@@ -28,37 +26,19 @@ export function AuthLayout({ children }: Props) {
             decoding="async"
           />
           <h1 className="auth-productTitle">Autism School Platform</h1>
-          <p className="auth-productTagline">
-            One secure workspace for families, teachers, and coordinators — track progress and stay connected.
-          </p>
+        </header>
 
-          <div className="auth-sideNotes">
-            <p className="auth-sideNotesTitle">What you unlock</p>
-            <ul className="auth-sideNotesList">
-              <li>Session notes & history in one place</li>
-              <li>Progress tracking tailored to each role</li>
-              <li>Chat with your school & therapy team</li>
-              <li>Reports families can understand</li>
-              <li>Secure, role-based access</li>
-            </ul>
-          </div>
-        </div>
-      </aside>
+        <nav className="auth-tabs" aria-label="Account access" dir="ltr">
+          <NavLink to="/login" className={tabClass} end>
+            Sign in
+          </NavLink>
+          <NavLink to="/register" className={tabClass}>
+            Create account
+          </NavLink>
+        </nav>
 
-      <div className="auth-panel">
-        <div className="auth-panelInner">
-          <nav className="auth-tabs" aria-label="Account access" dir="ltr">
-            <NavLink to="/login" className={tabClass} end>
-              Sign in
-            </NavLink>
-            <NavLink to="/register" className={tabClass}>
-              Create account
-            </NavLink>
-          </nav>
-
-          <div className="auth-card">{children}</div>
-          <SiteLegalLinks className="auth-legalLinks" />
-        </div>
+        <div className="auth-card">{children}</div>
+        <SiteLegalLinks className="auth-legalLinks" />
       </div>
     </div>
   )

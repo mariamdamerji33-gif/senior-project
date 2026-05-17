@@ -22,6 +22,10 @@ export default defineConfig([
     rules: {
       // API payloads are loosely typed; pages use assertions. Tighten gradually if needed.
       '@typescript-eslint/no-explicit-any': 'off',
+      // React Compiler rules — too strict for portaled menus/popovers; layout effects are intentional.
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
     },
   },
 ])

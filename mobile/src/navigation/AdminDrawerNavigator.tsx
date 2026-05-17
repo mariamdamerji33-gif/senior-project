@@ -1,5 +1,6 @@
 import { createDrawerNavigator, type DrawerContentComponentProps } from '@react-navigation/drawer'
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native'
+import { colors } from '../theme/colors'
 import { useAuth } from '../mvc/controllers/AuthController'
 import { DisplayComfortToolbar } from '../mvc/views/components/DisplayComfortToolbar'
 import { AdminAccountProfileScreen, AdminManagerHomeScreen } from '../mvc/views/screens'
@@ -76,6 +77,7 @@ export function AdminDrawerNavigator() {
         headerShown: false,
         swipeEnabled: false,
         drawerType: 'permanent',
+        sceneContainerStyle: { flex: 1, backgroundColor: colors.pageBg },
         drawerStyle: { width: drawerWidth, backgroundColor: 'transparent', borderRightWidth: 0 },
         overlayColor: 'transparent',
       }}

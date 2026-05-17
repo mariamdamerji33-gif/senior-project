@@ -388,6 +388,24 @@ export const api = {
       body: JSON.stringify({ status }),
     })
   },
+  async deleteSupportRequest(token: string, requestId: string) {
+    const path = `/api/support/requests/${encodeURIComponent(requestId)}`
+    const authHeaders = { Authorization: `Bearer ${token}` }
+    try {
+      return await request<{ ok: boolean }>(path, {
+        method: 'PATCH',
+        headers: authHeaders,
+        body: JSON.stringify({ action: 'delete' }),
+      })
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : ''
+      if (!/API route not found/i.test(msg) && !/invalid support request status/i.test(msg)) throw e
+      return request<{ ok: boolean }>(path, {
+        method: 'DELETE',
+        headers: authHeaders,
+      })
+    }
+  },
 
   async managerUsers(token: string) {
     return request<{ users: any[] }>('/api/manager/users', {
@@ -499,130 +517,130 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistOverview(token: string) {
+  async teacherOverview(token: string) {
     return request<{ counts: { children: number; activities: number; reports: number; sessions: number } }>(
-      '/api/therapist/overview',
+      '/api/teacher/overview',
       {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
       },
     )
   },
-  async therapistSessions(token: string) {
-    return request<{ sessions: any[] }>('/api/therapist/sessions', {
+  async teacherSessions(token: string) {
+    return request<{ sessions: any[] }>('/api/teacher/sessions', {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistAddSession(token: string, payload: { childId: string; date: string; status?: string }) {
-    return request<{ session: any }>('/api/therapist/sessions', {
+  async teacherAddSession(token: string, payload: { childId: string; date: string; status?: string }) {
+    return request<{ session: any }>('/api/teacher/sessions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
   },
-  async therapistPatchSession(token: string, sessionId: string, payload: { date?: string; status?: string }) {
-    return request<{ session: any }>(`/api/therapist/sessions/${encodeURIComponent(sessionId)}`, {
+  async teacherPatchSession(token: string, sessionId: string, payload: { date?: string; status?: string }) {
+    return request<{ session: any }>(`/api/teacher/sessions/${encodeURIComponent(sessionId)}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
   },
-  async therapistDeleteSession(token: string, sessionId: string) {
-    return request<{ ok: boolean }>(`/api/therapist/sessions/${encodeURIComponent(sessionId)}`, {
+  async teacherDeleteSession(token: string, sessionId: string) {
+    return request<{ ok: boolean }>(`/api/teacher/sessions/${encodeURIComponent(sessionId)}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistChildren(token: string) {
-    return request<{ children: any[] }>('/api/therapist/children', {
+  async teacherChildren(token: string) {
+    return request<{ children: any[] }>('/api/teacher/children', {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistProgress(token: string, childId: string) {
+  async teacherProgress(token: string, childId: string) {
     const qs = new URLSearchParams({ childId })
-    return request<{ progress: any[] }>(`/api/therapist/progress?${qs.toString()}`, {
+    return request<{ progress: any[] }>(`/api/teacher/progress?${qs.toString()}`, {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistAddProgress(
+  async teacherAddProgress(
     token: string,
     payload: { childId: string; activityId: string; score: number; date?: string },
   ) {
-    return request<{ progress: any }>('/api/therapist/progress', {
+    return request<{ progress: any }>('/api/teacher/progress', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
   },
-  async therapistPatchProgress(token: string, progressId: string, payload: { score?: number; date?: string }) {
-    return request<{ progress: any }>(`/api/therapist/progress/${encodeURIComponent(progressId)}`, {
+  async teacherPatchProgress(token: string, progressId: string, payload: { score?: number; date?: string }) {
+    return request<{ progress: any }>(`/api/teacher/progress/${encodeURIComponent(progressId)}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
   },
-  async therapistDeleteProgress(token: string, progressId: string) {
-    return request<{ ok: boolean }>(`/api/therapist/progress/${encodeURIComponent(progressId)}`, {
+  async teacherDeleteProgress(token: string, progressId: string) {
+    return request<{ ok: boolean }>(`/api/teacher/progress/${encodeURIComponent(progressId)}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistReports(token: string, childId: string) {
+  async teacherReports(token: string, childId: string) {
     const qs = new URLSearchParams({ childId })
-    return request<{ reports: any[] }>(`/api/therapist/reports?${qs.toString()}`, {
+    return request<{ reports: any[] }>(`/api/teacher/reports?${qs.toString()}`, {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistAddReport(token: string, payload: { childId: string; notes: string; progressScore: number; category?: string }) {
-    return request<{ report: any }>('/api/therapist/reports', {
+  async teacherAddReport(token: string, payload: { childId: string; notes: string; progressScore: number; category?: string }) {
+    return request<{ report: any }>('/api/teacher/reports', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
   },
-  async therapistPatchReport(
+  async teacherPatchReport(
     token: string,
     reportId: string,
     payload: { notes?: string; progressScore?: number; category?: string },
   ) {
-    return request<{ report: any }>(`/api/therapist/reports/${encodeURIComponent(reportId)}`, {
+    return request<{ report: any }>(`/api/teacher/reports/${encodeURIComponent(reportId)}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
   },
-  async therapistDeleteReport(token: string, reportId: string) {
-    return request<{ ok: boolean }>(`/api/therapist/reports/${encodeURIComponent(reportId)}`, {
+  async teacherDeleteReport(token: string, reportId: string) {
+    return request<{ ok: boolean }>(`/api/teacher/reports/${encodeURIComponent(reportId)}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistActivities(token: string) {
-    return request<{ activities: any[] }>('/api/therapist/activities', {
+  async teacherActivities(token: string) {
+    return request<{ activities: any[] }>('/api/teacher/activities', {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistAddActivity(token: string, payload: { title: string; description: string }) {
-    return request<{ activity: any }>('/api/therapist/activities', {
+  async teacherAddActivity(token: string, payload: { title: string; description: string }) {
+    return request<{ activity: any }>('/api/teacher/activities', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
   },
-  async therapistPatchActivity(token: string, activityId: string, payload: { title?: string; description?: string }) {
-    return request<{ activity: any }>(`/api/therapist/activities/${encodeURIComponent(activityId)}`, {
+  async teacherPatchActivity(token: string, activityId: string, payload: { title?: string; description?: string }) {
+    return request<{ activity: any }>(`/api/teacher/activities/${encodeURIComponent(activityId)}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
   },
-  async therapistDeleteActivity(token: string, activityId: string) {
-    return request<{ ok: boolean }>(`/api/therapist/activities/${encodeURIComponent(activityId)}`, {
+  async teacherDeleteActivity(token: string, activityId: string) {
+    return request<{ ok: boolean }>(`/api/teacher/activities/${encodeURIComponent(activityId)}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -694,50 +712,50 @@ export const api = {
     })
   },
 
-  async therapistTreatmentPlans(token: string, childId: string) {
+  async teacherTreatmentPlans(token: string, childId: string) {
     const qs = new URLSearchParams({ childId })
-    return request<{ plans: any[] }>(`/api/therapist/treatment/plans?${qs.toString()}`, {
+    return request<{ plans: any[] }>(`/api/teacher/treatment/plans?${qs.toString()}`, {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistCreateTreatmentPlan(
+  async teacherCreateTreatmentPlan(
     token: string,
     payload: { childId: string; title: string; notes?: string; status?: string; startDate?: string },
   ) {
-    return request<{ plan: any }>('/api/therapist/treatment/plans', {
+    return request<{ plan: any }>('/api/teacher/treatment/plans', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
   },
-  async therapistPatchTreatmentPlan(
+  async teacherPatchTreatmentPlan(
     token: string,
     planId: string,
     payload: { title?: string; notes?: string | null; status?: string; startDate?: string | null },
   ) {
-    return request<{ plan: any }>(`/api/therapist/treatment/plans/${encodeURIComponent(planId)}`, {
+    return request<{ plan: any }>(`/api/teacher/treatment/plans/${encodeURIComponent(planId)}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
   },
-  async therapistDeleteTreatmentPlan(token: string, planId: string, childId: string) {
+  async teacherDeleteTreatmentPlan(token: string, planId: string, childId: string) {
     const qs = new URLSearchParams({ childId })
-    return request<{ ok: boolean }>(`/api/therapist/treatment/plans/${encodeURIComponent(planId)}?${qs.toString()}`, {
+    return request<{ ok: boolean }>(`/api/teacher/treatment/plans/${encodeURIComponent(planId)}?${qs.toString()}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
 
-  async therapistTreatmentGoals(token: string, planId: string, childId: string) {
+  async teacherTreatmentGoals(token: string, planId: string, childId: string) {
     const qs = new URLSearchParams({ planId, childId })
-    return request<{ goals: any[] }>(`/api/therapist/treatment/goals?${qs.toString()}`, {
+    return request<{ goals: any[] }>(`/api/teacher/treatment/goals?${qs.toString()}`, {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistCreateTreatmentGoal(
+  async teacherCreateTreatmentGoal(
     token: string,
     payload: {
       planId: string
@@ -749,59 +767,59 @@ export const api = {
       dueDate?: string
     },
   ) {
-    return request<{ goal: any }>('/api/therapist/treatment/goals', {
+    return request<{ goal: any }>('/api/teacher/treatment/goals', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
   },
-  async therapistPatchTreatmentGoal(
+  async teacherPatchTreatmentGoal(
     token: string,
     goalId: string,
     childId: string,
     payload: { title?: string; target?: string | null; baseline?: string | null; status?: string; dueDate?: string | null },
   ) {
     const qs = new URLSearchParams({ childId })
-    return request<{ goal: any }>(`/api/therapist/treatment/goals/${encodeURIComponent(goalId)}?${qs.toString()}`, {
+    return request<{ goal: any }>(`/api/teacher/treatment/goals/${encodeURIComponent(goalId)}?${qs.toString()}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
   },
-  async therapistDeleteTreatmentGoal(token: string, goalId: string, childId: string) {
+  async teacherDeleteTreatmentGoal(token: string, goalId: string, childId: string) {
     const qs = new URLSearchParams({ childId })
-    return request<{ ok: boolean }>(`/api/therapist/treatment/goals/${encodeURIComponent(goalId)}?${qs.toString()}`, {
+    return request<{ ok: boolean }>(`/api/teacher/treatment/goals/${encodeURIComponent(goalId)}?${qs.toString()}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistDailyCheckins(token: string, childId: string) {
+  async teacherDailyCheckins(token: string, childId: string) {
     const qs = new URLSearchParams({ childId })
-    return request<{ checkins: any[] }>(`/api/therapist/daily-checkins?${qs.toString()}`, {
+    return request<{ checkins: any[] }>(`/api/teacher/daily-checkins?${qs.toString()}`, {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistParentSteps(token: string, childId: string) {
+  async teacherParentSteps(token: string, childId: string) {
     const qs = new URLSearchParams({ childId })
-    return request<{ steps: any[] }>(`/api/therapist/parent-steps?${qs.toString()}`, {
+    return request<{ steps: any[] }>(`/api/teacher/parent-steps?${qs.toString()}`, {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}` },
     })
   },
-  async therapistCreateParentStep(
+  async teacherCreateParentStep(
     token: string,
     payload: { childId: string; title: string; body: string; category?: string | null },
   ) {
-    return request<{ step: any }>('/api/therapist/parent-steps', {
+    return request<{ step: any }>('/api/teacher/parent-steps', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     })
   },
-  async therapistDeleteParentStep(token: string, id: string, childId: string) {
+  async teacherDeleteParentStep(token: string, id: string, childId: string) {
     const qs = new URLSearchParams({ childId })
-    return request<{ ok: boolean }>(`/api/therapist/parent-steps/${encodeURIComponent(id)}?${qs.toString()}`, {
+    return request<{ ok: boolean }>(`/api/teacher/parent-steps/${encodeURIComponent(id)}?${qs.toString()}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -819,6 +837,13 @@ export const api = {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
+    })
+  },
+  async chatDeleteMessage(token: string, messageId: string, childId: string) {
+    const qs = new URLSearchParams({ childId })
+    return request<{ ok: boolean }>(`/api/chat/messages/${encodeURIComponent(messageId)}?${qs.toString()}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
     })
   },
   async chatVoiceNoteUrl(token: string, payload: { childId: string; path: string }) {

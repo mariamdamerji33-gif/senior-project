@@ -39,7 +39,8 @@ export function ParentDrawerSidebar(props: DrawerContentComponentProps) {
     chat: language === 'ar' ? 'محادثة' : 'Chat',
     reports: language === 'ar' ? 'تقارير' : 'Reports',
     guide: language === 'ar' ? 'الدليل' : 'Guide',
-    profile: language === 'ar' ? 'الملف والأمان' : 'Profile and security',
+    profile: language === 'ar' ? 'الملف' : 'Profile',
+    profileA11y: language === 'ar' ? 'الملف والأمان' : 'Profile and security',
     noStudentTitle: language === 'ar' ? 'لا يوجد طفل مرتبط' : 'No student linked',
     noStudentBody:
       language === 'ar'
@@ -147,7 +148,7 @@ export function ParentDrawerSidebar(props: DrawerContentComponentProps) {
       <ScrollView style={styles.scrollFlex} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={copy.profile}
+          accessibilityLabel={copy.profileA11y}
           accessibilityState={{ selected: isProfile }}
           onPress={() => navigation.navigate('ParentAccountProfile')}
           style={[styles.leftDashLogoWrap, isProfile && styles.leftDashLogoWrapActive]}
@@ -156,7 +157,7 @@ export function ParentDrawerSidebar(props: DrawerContentComponentProps) {
         </Pressable>
         <Text style={styles.leftDashTitle}>{copy.menu}</Text>
 
-        <Pressable accessibilityRole="button" accessibilityLabel={copy.profile} accessibilityState={{ selected: isProfile }} style={isProfile ? styles.leftDashBtnActive : styles.leftDashBtn} onPress={() => navigation.navigate('ParentAccountProfile')}>
+        <Pressable accessibilityRole="button" accessibilityLabel={copy.profileA11y} accessibilityState={{ selected: isProfile }} style={isProfile ? styles.leftDashBtnActive : styles.leftDashBtn} onPress={() => navigation.navigate('ParentAccountProfile')}>
           <Text style={isProfile ? styles.leftDashIconActive : styles.leftDashIcon}>◎</Text>
           <Text style={isProfile ? styles.leftDashTextActive : styles.leftDashText}>{copy.profile}</Text>
         </Pressable>

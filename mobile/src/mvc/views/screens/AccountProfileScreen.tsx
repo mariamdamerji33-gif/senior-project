@@ -18,6 +18,8 @@ import { api } from '../../models/api'
 import type { AdminDrawerParamList } from '../../../navigation/parentDrawerTypes'
 import { normalizeBirthDateForApi } from '../../../utils/birthDateInput'
 
+const PHONE_INPUT_PLACEHOLDER = '961 xx/ xxx xxx'
+
 function initials(name: string | null | undefined) {
   const parts = String(name || '')
     .trim()
@@ -54,7 +56,7 @@ export function StaffAccountProfileBody({
   useEffect(() => {
     setPhone(user?.phone ?? '')
     setBirthDate(user?.birthDate ?? '')
-  }, [user?.id, user?.phone, user?.birthDate])
+  }, [user?.id])
 
   const copy = {
     eyebrow: isEn ? 'Account' : 'الحساب',
@@ -143,6 +145,11 @@ export function StaffAccountProfileBody({
             <Text style={[styles.meta, isArabic && styles.rtl]}>
               {copy.email}: {user?.email || '—'}
             </Text>
+            {user?.phone?.trim() ? (
+              <Text style={[styles.meta, isArabic && styles.rtl]}>
+                {copy.phone}: {user.phone}
+              </Text>
+            ) : null}
             {typeof user?.ageYears === 'number' ? (
               <Text style={[styles.meta, isArabic && styles.rtl]}>
                 {copy.age}: {user.ageYears}
@@ -157,7 +164,7 @@ export function StaffAccountProfileBody({
           style={[styles.input, isArabic && styles.rtl]}
           value={phone}
           onChangeText={setPhone}
-          placeholder="+1…"
+          placeholder={PHONE_INPUT_PLACEHOLDER}
           keyboardType="phone-pad"
           editable={!busy}
         />
@@ -190,8 +197,9 @@ export function StaffAccountProfileBody({
             void (async () => {
               try {
                 await api.patchMyProfile(token, { phone: phone.trim(), birthDate: birthNorm.iso })
-                setBirthDate(birthNorm.iso)
                 await refreshUser()
+                setPhone('')
+                setBirthDate('')
               } catch (e: unknown) {
                 setErr(e instanceof Error ? e.message : 'Save failed')
               } finally {
@@ -307,29 +315,29 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#ede6ff',
+    backgroundColor: '#f4f1fb',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   avatarImg: { width: 72, height: 72 },
   avatarTxt: { fontSize: 22, fontWeight: '900', color: '#4c1d95' },
-  name: { fontSize: 17, fontWeight: '900', color: '#24173f' },
-  meta: { marginTop: 4, color: '#5f5573', fontWeight: '600' },
+  name: { fontSize: 17, fontWeight: '900', color: '#17131f' },
+  meta: { marginTop: 4, color: '#534c62', fontWeight: '600' },
   label: { fontSize: 12, fontWeight: '800', color: '#6b5a8a', marginBottom: 6 },
   input: {
     borderWidth: 1,
-    borderColor: '#e1d6ff',
+    borderColor: '#dfd6ee',
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     backgroundColor: '#faf8ff',
-    color: '#24173f',
+    color: '#17131f',
     fontWeight: '600',
   },
   primaryBtn: {
     marginTop: 16,
-    backgroundColor: '#6b3df0',
+    backgroundColor: '#6d46d4',
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
@@ -342,12 +350,12 @@ const styles = StyleSheet.create({
     minWidth: 120,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#d4c4ff',
+    borderColor: '#cfc4e6',
     paddingVertical: 12,
     alignItems: 'center',
-    backgroundColor: '#f6f1ff',
+    backgroundColor: '#f4f1fb',
   },
-  ghostBtnText: { color: '#5b21b6', fontWeight: '800' },
+  ghostBtnText: { color: '#5a38b8', fontWeight: '800' },
   profileDivider: {
     height: 1,
     backgroundColor: '#e8e0fb',
@@ -362,7 +370,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   securityRowRtl: { flexDirection: 'row-reverse' },
-  securityRowTitle: { fontSize: 16, fontWeight: '800', color: '#24173f' },
+  securityRowTitle: { fontSize: 16, fontWeight: '800', color: '#17131f' },
   securityRowHint: { marginTop: 4, fontSize: 13, fontWeight: '600', color: '#6b5a8a' },
   securityChevron: { fontSize: 22, fontWeight: '300', color: '#8b7cb8' },
   logoutRow: {

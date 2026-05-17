@@ -162,7 +162,7 @@ export function ParentProgressReportsScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   refreshCenter: { textAlign: 'center' },
   rtl: { textAlign: 'right', writingDirection: 'rtl' },
-  cardHeading: { color: '#24173f', fontWeight: '900', fontSize: 17, marginBottom: 4 },
+  cardHeading: { color: '#17131f', fontWeight: '900', fontSize: 17, marginBottom: 4 },
   rowDivider: { borderTopWidth: 1, borderTopColor: '#efeafb', paddingTop: 12, marginTop: 12 },
   scoreBadge: {
     alignSelf: 'flex-start',
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   score: { fontWeight: '900' },
-  categoryText: { color: '#5f5573', marginTop: 2, fontWeight: '800', textTransform: 'capitalize' },
+  categoryText: { color: '#534c62', marginTop: 2, fontWeight: '800', textTransform: 'capitalize' },
   note: { color: '#6d6485', marginTop: 4, lineHeight: 20, fontWeight: '600' },
   empty: { color: '#6d6485', fontWeight: '600' },
   cachedCard: { backgroundColor: '#fffbeb', borderColor: '#fcd34d' },

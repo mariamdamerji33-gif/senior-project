@@ -176,7 +176,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f7f2ff' },
+  safe: { flex: 1, backgroundColor: '#f2eff9' },
   safeHc: { backgroundColor: '#ffffff' },
   keyboardAvoider: { flex: 1 },
   wrap: { flexGrow: 1, padding: 18, paddingBottom: 28, gap: 14 },
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: '#e5dcfb',
+    borderColor: '#dfd6ee',
     padding: 18,
     gap: 10,
   },
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   label: { color: '#534c62', fontWeight: '800', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.6 },
   input: {
     borderWidth: 1,
-    borderColor: '#e5dcfb',
+    borderColor: '#dfd6ee',
     borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -204,8 +204,8 @@ const styles = StyleSheet.create({
   },
   rtl: { writingDirection: 'rtl', textAlign: 'right' },
   rtlInput: { textAlign: 'right', writingDirection: 'rtl' },
-  err: { color: '#b42318', fontWeight: '700', fontSize: 14 },
-  doneMsg: { color: '#2c2144', fontSize: 15, lineHeight: 22, fontWeight: '600' },
+  err: { color: '#b91c1c', fontWeight: '700', fontSize: 14 },
+  doneMsg: { color: '#17131f', fontSize: 15, lineHeight: 22, fontWeight: '600' },
   devBox: {
     marginTop: 8,
     padding: 12,
@@ -217,6 +217,6 @@ const styles = StyleSheet.create({
   devTitle: { color: '#92400e', fontSize: 13, fontWeight: '800', lineHeight: 19 },
   devToken: { marginTop: 8, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 12, color: '#1c1917' },
   backLink: { marginTop: 8, paddingVertical: 6 },
-  backLinkText: { color: '#6b3df0', fontWeight: '800', fontSize: 15 },
+  backLinkText: { color: '#6d46d4', fontWeight: '800', fontSize: 15 },
   hint: { color: '#6d6485', fontSize: 12, lineHeight: 18, fontWeight: '600' },
 })

@@ -1,99 +1,99 @@
 const express = require('express');
 const { requireAuth, requireRole } = require('../../middleware/auth');
 const { requireServiceRole } = require('../../middleware/serviceRole');
-const therapistController = require('../controllers/therapistController');
+const teacherController = require('../controllers/teacherController');
 
 const router = express.Router();
 
-router.get('/overview', requireAuth, requireRole(['therapist', 'super_admin']), therapistController.overview);
-router.get('/progress', requireAuth, requireRole(['therapist', 'super_admin']), therapistController.childProgress);
+router.get('/overview', requireAuth, requireRole(['therapist', 'super_admin']), teacherController.overview);
+router.get('/progress', requireAuth, requireRole(['therapist', 'super_admin']), teacherController.childProgress);
 router.post(
   '/progress',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.createProgress,
+  teacherController.createProgress,
 );
 router.patch(
   '/progress/:id',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.updateProgress,
+  teacherController.updateProgress,
 );
 router.delete(
   '/progress/:id',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.deleteProgress,
+  teacherController.deleteProgress,
 );
-router.get('/sessions', requireAuth, requireRole(['therapist', 'super_admin']), therapistController.listSessions);
+router.get('/sessions', requireAuth, requireRole(['therapist', 'super_admin']), teacherController.listSessions);
 router.post(
   '/sessions',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.createSession,
+  teacherController.createSession,
 );
 router.patch(
   '/sessions/:id',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.updateSession,
+  teacherController.updateSession,
 );
 router.delete(
   '/sessions/:id',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.deleteSession,
+  teacherController.deleteSession,
 );
-router.get('/children', requireAuth, requireRole(['therapist', 'super_admin']), therapistController.listChildren);
-router.get('/reports', requireAuth, requireRole(['therapist', 'super_admin']), therapistController.listReports);
+router.get('/children', requireAuth, requireRole(['therapist', 'super_admin']), teacherController.listChildren);
+router.get('/reports', requireAuth, requireRole(['therapist', 'super_admin']), teacherController.listReports);
 router.post(
   '/reports',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.createReport,
+  teacherController.createReport,
 );
 router.patch(
   '/reports/:id',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.updateReport,
+  teacherController.updateReport,
 );
 router.delete(
   '/reports/:id',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.deleteReport,
+  teacherController.deleteReport,
 );
-router.get('/activities', requireAuth, requireRole(['therapist', 'super_admin']), therapistController.listActivities);
+router.get('/activities', requireAuth, requireRole(['therapist', 'super_admin']), teacherController.listActivities);
 router.post(
   '/activities',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.createActivity,
+  teacherController.createActivity,
 );
 router.patch(
   '/activities/:id',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.updateActivity,
+  teacherController.updateActivity,
 );
 router.delete(
   '/activities/:id',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.deleteActivity,
+  teacherController.deleteActivity,
 );
 
 // Treatment plans & goals
@@ -101,56 +101,56 @@ router.get(
   '/treatment/plans',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
-  therapistController.listTreatmentPlans,
+  teacherController.listTreatmentPlans,
 );
 router.post(
   '/treatment/plans',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.createTreatmentPlan,
+  teacherController.createTreatmentPlan,
 );
 router.patch(
   '/treatment/plans/:id',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.patchTreatmentPlan,
+  teacherController.patchTreatmentPlan,
 );
 router.delete(
   '/treatment/plans/:id',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.deleteTreatmentPlan,
+  teacherController.deleteTreatmentPlan,
 );
 
 router.get(
   '/treatment/goals',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
-  therapistController.listTreatmentGoals,
+  teacherController.listTreatmentGoals,
 );
 router.post(
   '/treatment/goals',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.createTreatmentGoal,
+  teacherController.createTreatmentGoal,
 );
 router.patch(
   '/treatment/goals/:id',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.patchTreatmentGoal,
+  teacherController.patchTreatmentGoal,
 );
 router.delete(
   '/treatment/goals/:id',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.deleteTreatmentGoal,
+  teacherController.deleteTreatmentGoal,
 );
 
 // Daily check-ins (read-only for therapist)
@@ -158,7 +158,7 @@ router.get(
   '/daily-checkins',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
-  therapistController.listDailyCheckins,
+  teacherController.listDailyCheckins,
 );
 
 // Steps for parents (therapist writes)
@@ -166,21 +166,21 @@ router.get(
   '/parent-steps',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
-  therapistController.listParentSteps,
+  teacherController.listParentSteps,
 );
 router.post(
   '/parent-steps',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.createParentStep,
+  teacherController.createParentStep,
 );
 router.delete(
   '/parent-steps/:id',
   requireAuth,
   requireRole(['therapist', 'super_admin']),
   requireServiceRole,
-  therapistController.deleteParentStep,
+  teacherController.deleteParentStep,
 );
 
 module.exports = router;

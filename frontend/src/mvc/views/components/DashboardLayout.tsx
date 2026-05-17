@@ -1,6 +1,5 @@
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
-import { WelcomeBanner } from './WelcomeBanner'
 import { useAuth } from '@/mvc/controllers'
 import { formatRoleLabel } from '@/utils/roleLabels'
 import { DashboardHeaderTools } from './DashboardHeaderTools'
@@ -26,7 +25,6 @@ export function DashboardLayout() {
             <DashboardHeaderTools />
           </div>
         </header>
-        <WelcomeBanner />
         <div className="dashboard-outlet">
           <Outlet />
         </div>

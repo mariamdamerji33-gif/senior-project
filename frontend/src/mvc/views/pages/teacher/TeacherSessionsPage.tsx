@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api } from '@/mvc/models/apiClient'
 import { useAuth } from '@/mvc/controllers'
-import { Card } from '@/mvc/views/components/ui/Card'
 import { Button } from '@/mvc/views/components/ui/Button'
+import { Card } from '@/mvc/views/components/ui/Card'
+import { TableRowActionsMenu } from '@/mvc/views/components/ui/TableRowActionsMenu'
 import { useConfirmDialog } from '@/mvc/views/components/ui/useConfirmDialog'
 import { Select } from '@/mvc/views/components/ui/forms/Select'
-import { TherapistNoChildrenHint } from '@/mvc/views/components/TherapistNoChildrenHint'
+import { TeacherNoChildrenHint } from '@/mvc/views/components/TeacherNoChildrenHint'
 
 type Child = { id: string; name: string; age: number }
 type SessionRow = { id: string; childId: string; therapistId: string; date: string; status: string }
@@ -28,7 +29,7 @@ function formatSessionWhen(iso: string) {
   return d.toLocaleString()
 }
 
-export function TherapistSessionsPage() {
+export function TeacherSessionsPage() {
   const { token } = useAuth()
   const { confirm, confirmDialog } = useConfirmDialog()
   const [children, setChildren] = useState<Child[]>([])
@@ -41,10 +42,11 @@ export function TherapistSessionsPage() {
   const [saving, setSaving] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [rowError, setRowError] = useState<string | null>(null)
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     if (!token) return
-    const [cRes, sRes] = await Promise.all([api.therapistChildren(token), api.therapistSessions(token)])
+    const [cRes, sRes] = await Promise.all([api.teacherChildren(token), api.teacherSessions(token)])
     setChildren(cRes.children as Child[])
     setSessions(sRes.sessions as SessionRow[])
   }, [token])
@@ -81,12 +83,7 @@ export function TherapistSessionsPage() {
   return (
     <div className="ui-page">
       <h2 className="ui-pageTitle">Support sessions</h2>
-      <p className="ui-pageLead">
-        Schedule and review sessions for <strong>your</strong> assigned students. New rows are stored in the{' '}
-        <code>sessions</code> table.
-      </p>
-
-      {!loading && children.length === 0 ? <TherapistNoChildrenHint /> : null}
+{!loading && children.length === 0 ? <TeacherNoChildrenHint /> : null}
 
       <Card style={{ padding: 16, marginBottom: 12 }}>
         <h3 className="ui-sectionTitle">Create session</h3>
@@ -145,7 +142,7 @@ export function TherapistSessionsPage() {
                   setSaving(true)
                   void (async () => {
                     try {
-                      await api.therapistAddSession(token, { childId, date: dateIso, status })
+                      await api.teacherAddSession(token, { childId, date: dateIso, status })
                       await refresh()
                       setWhenLocal(localDatetimeInputValue())
                       setStatus('scheduled')
@@ -193,7 +190,7 @@ export function TherapistSessionsPage() {
                   <th>Child</th>
                   <th>When</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th aria-label="Actions" />
                 </tr>
               </thead>
               <tbody>
@@ -210,7 +207,7 @@ export function TherapistSessionsPage() {
                           void (async () => {
                             setRowError(null)
                             try {
-                              await api.therapistPatchSession(token, s.id, { status: next })
+                              await api.teacherPatchSession(token, s.id, { status: next })
                               await refresh()
                             } catch (err: unknown) {
                               setRowError(err instanceof Error ? err.message : 'Update failed')
@@ -225,31 +222,39 @@ export function TherapistSessionsPage() {
                       </Select>
                     </td>
                     <td>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => {
-                          if (!token) return
-                          void (async () => {
-                            const ok = await confirm({
-                              title: 'Delete session?',
-                              description: 'This removes this session row from the schedule.',
-                              confirmLabel: 'Delete',
-                              tone: 'danger',
-                            })
-                            if (!ok) return
-                            setRowError(null)
-                            try {
-                              await api.therapistDeleteSession(token, s.id)
-                              await refresh()
-                            } catch (err: unknown) {
-                              setRowError(err instanceof Error ? err.message : 'Delete failed')
-                            }
-                          })()
-                        }}
-                      >
-                        Delete
-                      </Button>
+                      <div id={`therapist-session-row-actions-${s.id}`} className="ui-rowActionsHost">
+                        <TableRowActionsMenu
+                          open={menuOpenId === s.id}
+                          onOpenChange={(open) => setMenuOpenId(open ? s.id : null)}
+                          items={[
+                            {
+                              id: 'delete',
+                              label: 'Delete',
+                              danger: true,
+                              disabled: !token,
+                              onClick: () => {
+                                if (!token) return
+                                void (async () => {
+                                  const ok = await confirm({
+                                    title: 'Delete session?',
+                                    description: 'This removes this session row from the schedule.',
+                                    confirmLabel: 'Delete',
+                                    tone: 'danger',
+                                  })
+                                  if (!ok) return
+                                  setRowError(null)
+                                  try {
+                                    await api.teacherDeleteSession(token, s.id)
+                                    await refresh()
+                                  } catch (err: unknown) {
+                                    setRowError(err instanceof Error ? err.message : 'Delete failed')
+                                  }
+                                })()
+                              },
+                            },
+                          ]}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Card } from '@/mvc/views/components/ui/Card'
-import { TherapistNoChildrenHint } from '@/mvc/views/components/TherapistNoChildrenHint'
+import { TeacherNoChildrenHint } from '@/mvc/views/components/TeacherNoChildrenHint'
 import { Button } from '@/mvc/views/components/ui/Button'
 import { useConfirmDialog } from '@/mvc/views/components/ui/useConfirmDialog'
 import { Select } from '@/mvc/views/components/ui/forms/Select'
@@ -39,7 +39,7 @@ type Report = {
   createdAt: string
 }
 
-export function TherapistReportsPage() {
+export function TeacherReportsPage() {
   const { token } = useAuth()
   const { confirm, confirmDialog } = useConfirmDialog()
   const [children, setChildren] = useState<Child[]>([])
@@ -57,7 +57,7 @@ export function TherapistReportsPage() {
       setLoadingChildren(true)
       setError(null)
       try {
-        const res = await api.therapistChildren(token)
+        const res = await api.teacherChildren(token)
         if (cancelled) return
         const nextChildren = res.children as Child[]
         setChildren(nextChildren)
@@ -83,7 +83,7 @@ export function TherapistReportsPage() {
       setLoadingReports(true)
       setError(null)
       try {
-        const res = await api.therapistReports(token, childId)
+        const res = await api.teacherReports(token, childId)
         if (cancelled) return
         setReports(res.reports as Report[])
       } catch (err: any) {
@@ -115,11 +115,7 @@ export function TherapistReportsPage() {
   return (
     <div className="ui-page">
       <h2 className="ui-pageTitle">Notes & reports</h2>
-      <p className="ui-pageLead">
-        Write session notes and a progress score for each assigned student. Data is saved to the reports system.
-      </p>
-
-      {!loadingChildren && children.length === 0 ? <TherapistNoChildrenHint /> : null}
+{!loadingChildren && children.length === 0 ? <TeacherNoChildrenHint /> : null}
 
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
         <div style={{ minWidth: 320, flex: '0 0 320px' }}>
@@ -202,8 +198,8 @@ export function TherapistReportsPage() {
                   setSaving(true)
                   setError(null)
                   try {
-                    await api.therapistAddReport(token, payload)
-                    const refreshed = await api.therapistReports(token, childId)
+                    await api.teacherAddReport(token, payload)
+                    const refreshed = await api.teacherReports(token, childId)
                     setReports(refreshed.reports as Report[])
                     setNotes('')
                     setCategory('communication')
@@ -279,12 +275,12 @@ export function TherapistReportsPage() {
                                 setEditSaving(true)
                                 setError(null)
                                 try {
-                                  await api.therapistPatchReport(token, r.id, {
+                                  await api.teacherPatchReport(token, r.id, {
                                     notes: editNotes.trim(),
                                     progressScore: editScore,
                                     category: editCategory,
                                   })
-                                  const refreshed = await api.therapistReports(token, childId)
+                                  const refreshed = await api.teacherReports(token, childId)
                                   setReports(refreshed.reports as Report[])
                                   setEditingId(null)
                                 } catch (err: any) {
@@ -337,8 +333,8 @@ export function TherapistReportsPage() {
                                   if (!ok) return
                                   setError(null)
                                   try {
-                                    await api.therapistDeleteReport(token, r.id)
-                                    const refreshed = await api.therapistReports(token, childId)
+                                    await api.teacherDeleteReport(token, r.id)
+                                    const refreshed = await api.teacherReports(token, childId)
                                     setReports(refreshed.reports as Report[])
                                     if (editingId === r.id) setEditingId(null)
                                   } catch (err: any) {

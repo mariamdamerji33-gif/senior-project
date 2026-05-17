@@ -53,10 +53,8 @@ router.patch('/children/:id', ...patchChildChain());
 router.put('/children/:id', ...patchChildChain());
 router.post('/children', requireAuth, requireRole(['manager', 'super_admin']), requireServiceRole, managerController.createChild);
 router.delete('/children/:id', requireAuth, requireRole(['manager', 'super_admin']), requireServiceRole, managerController.deleteChild);
-router.get('/sessions', requireAuth, requireRole(['manager', 'super_admin']), managerController.listSessions);
-router.post('/sessions', requireAuth, requireRole(['manager', 'super_admin']), requireServiceRole, managerController.createSession);
-router.patch('/sessions/:id', requireAuth, requireRole(['manager', 'super_admin']), requireServiceRole, managerController.updateSession);
-router.delete('/sessions/:id', requireAuth, requireRole(['manager', 'super_admin']), requireServiceRole, managerController.deleteSession);
+router.get('/sessions', requireAuth, requireRole(['super_admin']), managerController.listSessions);
+router.patch('/sessions/:id', requireAuth, requireRole(['super_admin']), requireServiceRole, managerController.updateSession);
 router.get('/reports', requireAuth, requireRole(['manager', 'super_admin']), managerController.listReports);
 
 module.exports = router;

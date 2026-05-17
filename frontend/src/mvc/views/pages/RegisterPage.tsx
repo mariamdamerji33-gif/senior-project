@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { Role } from '@/types/auth'
 import { api } from '@/mvc/models/apiClient'
 import { WEB_PUBLIC_ROLE_OPTIONS } from '@/utils/roleLabels'
-import { REGISTER_PASSWORD_HINT, meetsRegisterPasswordRules } from '@/utils/passwordRules'
+import { meetsRegisterPasswordRules } from '@/utils/passwordRules'
 import { setRegistrationWatch } from '@/utils/registrationWatch'
 import { AuthLayout } from '@/mvc/views/components/auth/AuthLayout'
 import { RegistrationNotifyBanner } from '@/mvc/views/components/RegistrationNotifyBanner'
@@ -34,11 +34,6 @@ export function RegisterPage() {
     <AuthLayout>
       <RegistrationNotifyBanner />
       <h2 className="auth-stepTitle">Create account</h2>
-      <p className="auth-stepLead">
-        <strong>Coordinator and Teacher</strong> can start immediately. <strong>School Admin</strong> needs approval
-        from another administrator. <strong>Family</strong> accounts are created by the school and sign in on the mobile
-        app only — not through this registration form.
-      </p>
 
       <form
         className="auth-form login-form"
@@ -107,9 +102,6 @@ export function RegisterPage() {
             required
           />
         </label>
-        {password.length > 0 && !meetsRegisterPasswordRules(password) ? (
-          <p className="login-errorHint">{REGISTER_PASSWORD_HINT}</p>
-        ) : null}
         <label className="login-field">
           <span className="login-label">I am registering as</span>
           <Select value={requestedRole} onChange={(e) => setRequestedRole(e.target.value as Role)}>

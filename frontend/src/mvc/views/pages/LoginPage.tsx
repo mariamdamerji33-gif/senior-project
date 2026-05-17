@@ -2,13 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/mvc/controllers'
 import { isFamilyWebUser } from '@/utils/familyWebAccess'
-import type { Role } from '@/types/auth'
-import { SIGN_IN_ROLE_OPTIONS } from '@/utils/roleLabels'
 import { AuthLayout } from '@/mvc/views/components/auth/AuthLayout'
 import { RegistrationNotifyBanner } from '@/mvc/views/components/RegistrationNotifyBanner'
 import { Button } from '@/mvc/views/components/ui/Button'
 import { TextInput } from '@/mvc/views/components/ui/forms/TextInput'
-import { Select } from '@/mvc/views/components/ui/forms/Select'
 import { useToast } from '@/mvc/views/components/useToast'
 
 export function LoginPage() {
@@ -16,11 +13,19 @@ export function LoginPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<Role>('therapist')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
-  const canSubmit = useMemo(() => email.trim().length > 3 && password.trim().length > 0, [email, password])
+  const canSubmit = useMemo(
+    () => email.trim().length > 3 && password.trim().length > 0 && !submitting,
+    [email, password, submitting],
+  )
+
+  async function waitAtLeast(ms: number, startedAt: number) {
+    const left = ms - (Date.now() - startedAt)
+    if (left > 0) await new Promise<void>((r) => window.setTimeout(r, left))
+  }
 
   useEffect(() => {
     if (!loading && isFamilyWebUser(user, token)) logout()
@@ -38,14 +43,6 @@ export function LoginPage() {
     <AuthLayout>
       <RegistrationNotifyBanner />
       <h2 className="auth-stepTitle">Sign in</h2>
-      <p className="auth-stepLead">
-        Sign in with your school email for staff access (School Admin, Coordinator, or Teacher).{' '}
-        <strong>Family</strong> accounts use the{' '}
-        <Link to="/family-app" className="ui-dashLink">
-          mobile app only
-        </Link>
-        . The role you pick below is only a reminder — your real permissions always come from the database.
-      </p>
 
       <form
         className="auth-form login-form"
@@ -53,13 +50,19 @@ export function LoginPage() {
           e.preventDefault()
           if (!canSubmit) return
           setError(null)
+          const startedAt = Date.now()
+          setSubmitting(true)
           void (async () => {
             try {
-              await login({ email: email.trim(), password, role })
+              await login({ email: email.trim(), password })
+              await waitAtLeast(2000, startedAt)
               toast('Signed in successfully', 'success')
               navigate('/dashboard', { replace: true })
             } catch (err: unknown) {
+              await waitAtLeast(2000, startedAt)
               setError(err instanceof Error ? err.message : 'Login failed')
+            } finally {
+              setSubmitting(false)
             }
           })()
         }}
@@ -86,21 +89,16 @@ export function LoginPage() {
             required
           />
         </label>
-        <label className="login-field">
-          <span className="login-label">Role</span>
-          <Select value={role} onChange={(e) => setRole(e.target.value as Role)}>
-            {SIGN_IN_ROLE_OPTIONS.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </Select>
-        </label>
-        <Button type="submit" disabled={!canSubmit} variant="primary" className="login-submit">
-          Continue
+        <Button
+          type="submit"
+          disabled={!canSubmit}
+          variant="primary"
+          className={'login-submit' + (submitting ? ' login-submit--busy' : '')}
+        >
+          {submitting ? 'Signing in…' : 'Log in'}
         </Button>
         <p className="auth-forgotRow">
-          <Link to="/forgot-password" className="ui-dashLink">
+          <Link to="/forgot-password" className="auth-forgotLink">
             Forgot password?
           </Link>
         </p>
@@ -108,17 +106,6 @@ export function LoginPage() {
         {error ? (
           <div className="login-error" role="alert">
             <div className="login-errorTitle">{error}</div>
-            {error.toLowerCase().includes('invalid credentials') ? (
-              <p className="login-errorHint">
-                Check the email, password, and selected role. If you are using seeded accounts from the project README,
-                match the account type to the role you selected.
-              </p>
-            ) : error.toLowerCase().includes('mobile app') ? (
-              <p className="login-errorHint">
-                Open <Link to="/family-app">Family access</Link> for app instructions. Family sign-in is not available on
-                this website.
-              </p>
-            ) : null}
           </div>
         ) : null}
       </form>
