@@ -3,12 +3,15 @@ import { Link } from 'react-router-dom'
 import { api } from '@/mvc/models/apiClient'
 import { AuthLayout } from '@/mvc/views/components/auth/AuthLayout'
 import { Button } from '@/mvc/views/components/ui/Button'
+import { EmailFieldError } from '@/mvc/views/components/ui/forms/EmailFieldError'
 import { TextInput } from '@/mvc/views/components/ui/forms/TextInput'
+import { emailFieldError, isValidEmail } from '@/utils/fieldValidation'
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [emailTouched, setEmailTouched] = useState(false)
   const [donePayload, setDonePayload] = useState<{
     message: string
     devNotice?: string
@@ -16,7 +19,7 @@ export function ForgotPasswordPage() {
     devResetToken?: string
   } | null>(null)
 
-  const canSubmit = useMemo(() => email.trim().length > 4 && !loading, [email, loading])
+  const canSubmit = useMemo(() => isValidEmail(email) && !loading, [email, loading])
 
   return (
     <AuthLayout>
@@ -56,6 +59,12 @@ export function ForgotPasswordPage() {
           className="auth-form login-form"
           onSubmit={(e) => {
             e.preventDefault()
+            setEmailTouched(true)
+            const emailErr = emailFieldError(email)
+            if (emailErr) {
+              setError(emailErr)
+              return
+            }
             if (!canSubmit) return
             setError(null)
             setLoading(true)
@@ -81,11 +90,13 @@ export function ForgotPasswordPage() {
             <TextInput
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => setEmailTouched(true)}
               type="email"
               placeholder="you@school.edu"
               autoComplete="email"
               required
             />
+            <EmailFieldError value={email} show={emailTouched} />
           </label>
           <Button type="submit" disabled={!canSubmit} variant={canSubmit ? 'primary' : 'ghost'} className="login-submit">
             {loading ? 'Sending…' : 'Send reset instructions'}

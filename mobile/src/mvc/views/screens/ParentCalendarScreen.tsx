@@ -176,15 +176,15 @@ export function ParentCalendarScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   refreshText: { textAlign: 'center' },
-  empty: { color: '#6d6485', textAlign: 'center', fontWeight: '600' },
+  empty: { color: '#64748b', textAlign: 'center', fontWeight: '600' },
   timeline: { gap: 10 },
   item: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   itemRtl: { flexDirection: 'row-reverse' },
-  iconCircle: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#f4f1fb', alignItems: 'center', justifyContent: 'center' },
-  iconText: { color: '#5f3dc9', fontWeight: '900', fontSize: 16 },
+  iconCircle: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#dbeafe', alignItems: 'center', justifyContent: 'center' },
+  iconText: { color: '#1e40af', fontWeight: '900', fontSize: 16 },
   itemBody: { flex: 1, gap: 4 },
-  itemDate: { color: '#7c7392', fontSize: 12, fontWeight: '800' },
-  itemTitle: { color: '#17131f', fontWeight: '900', fontSize: 16 },
-  itemText: { color: '#534c62', lineHeight: 20, fontWeight: '600' },
+  itemDate: { color: '#64748b', fontSize: 12, fontWeight: '800' },
+  itemTitle: { color: '#0f172a', fontWeight: '900', fontSize: 16 },
+  itemText: { color: '#475569', lineHeight: 20, fontWeight: '600' },
   rtlText: { textAlign: 'right', writingDirection: 'rtl' },
 })

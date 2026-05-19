@@ -1,6 +1,8 @@
 const path = require('path');
 const userModel = require('../models/userModel');
+const registrationRequestModel = require('../models/registrationRequestModel');
 const { serviceRoleConfigured, supabaseUrl } = require('../../config/database');
+const { isSmtpSendConfigured } = require('../../utils/smtpMail');
 const { renderHealthHtml, renderApiConsoleHtml } = require('../../lib/htmlSkin');
 
 function frontendOrigin() {
@@ -22,18 +24,31 @@ function root(req, res) {
 
 async function buildHealthPayload() {
   let database = 'unknown';
+  let registrationRequestsTable = 'unknown';
   try {
     await userModel.sampleUsers(1);
     database = 'ok';
   } catch {
     database = 'error';
   }
+  if (!serviceRoleConfigured) {
+    registrationRequestsTable = 'needs_service_role';
+  } else {
+    try {
+      await registrationRequestModel.countByStatus('all');
+      registrationRequestsTable = 'ok';
+    } catch {
+      registrationRequestsTable = 'error';
+    }
+  }
   return {
     ok: true,
     service: 'autism-platform-api',
     database,
+    registrationRequestsTable,
     supabaseUrlConfigured: Boolean(supabaseUrl),
     serviceRoleKeyConfigured: serviceRoleConfigured,
+    smtpConfigured: isSmtpSendConfigured(),
     envFileHint: `Backend loads ${path.join(__dirname, '..', '..', '.env')}`,
     ts: new Date().toISOString(),
   };

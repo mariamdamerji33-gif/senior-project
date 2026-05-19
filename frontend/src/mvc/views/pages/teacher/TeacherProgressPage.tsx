@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card } from '@/mvc/views/components/ui/Card'
 import { Button } from '@/mvc/views/components/ui/Button'
@@ -9,6 +9,8 @@ import { RowEditPopover } from '@/mvc/views/components/ui/RowEditPopover'
 import { Select } from '@/mvc/views/components/ui/forms/Select'
 import { TextInput } from '@/mvc/views/components/ui/forms/TextInput'
 import { api } from '@/mvc/models/apiClient'
+import { FieldError } from '@/mvc/views/components/ui/forms/FieldError'
+import { progressScoreFieldError } from '@/utils/fieldValidation'
 import { useAuth } from '@/mvc/controllers'
 
 type Child = { id: string; name: string; age: number; diagnosis?: string | null }
@@ -122,14 +124,14 @@ export function TeacherProgressPage() {
     }
   }, [token])
 
-  async function reloadProgress() {
+  const reloadProgress = useCallback(async () => {
     if (!token || !childId) {
       setItems([])
       return
     }
     const res = await api.teacherProgress(token, childId)
     setItems((res.progress || []) as ProgressItem[])
-  }
+  }, [token, childId])
 
   useEffect(() => {
     let cancelled = false
@@ -155,7 +157,7 @@ export function TeacherProgressPage() {
     return () => {
       cancelled = true
     }
-  }, [token, childId])
+  }, [token, childId, reloadProgress])
 
   function openEdit(p: ProgressItem) {
     setMenuOpenId(null)
@@ -170,14 +172,10 @@ export function TeacherProgressPage() {
     setEditError(null)
   }
 
+  const [scoreTouched, setScoreTouched] = useState(false)
+
   const canSaveNew =
-    !!token &&
-    !!childId &&
-    !!activityId &&
-    !saving &&
-    !Number.isNaN(Number(scoreInput)) &&
-    Number(scoreInput) >= 0 &&
-    Number(scoreInput) <= 100
+    !!token && !!childId && !!activityId && !saving && !progressScoreFieldError(scoreInput)
 
   return (
     <div className="ui-page">
@@ -258,8 +256,10 @@ export function TeacherProgressPage() {
                       max={100}
                       value={scoreInput}
                       onChange={(e) => setScoreInput(e.target.value)}
+                      onBlur={() => setScoreTouched(true)}
                       aria-label="Score 0 to 100"
                     />
+                    <FieldError message={progressScoreFieldError(scoreInput)} show={scoreTouched} />
                   </label>
                   <label className="ui-progressForm__field ui-progressForm__field--narrow">
                     <span>Date</span>
@@ -272,6 +272,12 @@ export function TeacherProgressPage() {
                     disabled={!canSaveNew}
                     onClick={() => {
                       if (!canSaveNew) return
+                      setScoreTouched(true)
+                      const scoreErr = progressScoreFieldError(scoreInput)
+                      if (scoreErr) {
+                        setSaveError(scoreErr)
+                        return
+                      }
                       const score = Number(scoreInput)
                       setSaveError(null)
                       setSaving(true)

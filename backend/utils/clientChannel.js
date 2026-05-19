@@ -19,9 +19,15 @@ function familyLoginBlockedOnWeb(userRole, req) {
   return String(userRole || '').toLowerCase() === 'parent' && !isMobileClient(req);
 }
 
+/** Signed profile photo URLs: longer on mobile (cached offline) vs web (1h). */
+function profilePhotoSignedUrlExpiresSec(req) {
+  return isMobileClient(req) ? 60 * 60 * 24 * 7 : 3600;
+}
+
 module.exports = {
   CLIENT_HEADER,
   clientChannel,
   isMobileClient,
   familyLoginBlockedOnWeb,
+  profilePhotoSignedUrlExpiresSec,
 };

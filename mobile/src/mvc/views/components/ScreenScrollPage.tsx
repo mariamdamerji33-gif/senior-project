@@ -28,7 +28,7 @@ type Props = {
 }
 
 /**
- * Standard parent screen: safe area, purple header band, sheet-style body with consistent padding.
+ * Standard parent screen: safe area, blue header band, sheet-style body with consistent padding.
  */
 export function ScreenScrollPage({
   eyebrow,

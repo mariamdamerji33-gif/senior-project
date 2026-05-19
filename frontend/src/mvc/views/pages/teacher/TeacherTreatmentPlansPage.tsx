@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '@/mvc/models/apiClient'
+import { FieldError } from '@/mvc/views/components/ui/forms/FieldError'
+import { planTitleFieldError } from '@/utils/fieldValidation'
 import { useAuth } from '@/mvc/controllers'
 import { Card } from '@/mvc/views/components/ui/Card'
 import { Button } from '@/mvc/views/components/ui/Button'
@@ -68,6 +70,7 @@ export function TeacherTreatmentPlansPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [newTitle, setNewTitle] = useState('')
+  const [newPlanTouched, setNewPlanTouched] = useState(false)
   const [newNotes, setNewNotes] = useState('')
   const [creatingPlan, setCreatingPlan] = useState(false)
 
@@ -215,8 +218,10 @@ export function TeacherTreatmentPlansPage() {
                 <TextInput
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
+                  onBlur={() => setNewPlanTouched(true)}
                   placeholder="e.g. Communication foundations"
                 />
+                <FieldError message={planTitleFieldError(newTitle)} show={newPlanTouched} />
               </label>
               <label className="ui-progressForm__field" style={{ flex: '2 1 280px' }}>
                 <span>Overview (optional)</span>
@@ -230,9 +235,15 @@ export function TeacherTreatmentPlansPage() {
                 type="button"
                 variant="primary"
                 className="ui-progressForm__submit"
-                disabled={!token || !childId || newTitle.trim().length < 2 || creatingPlan}
+                disabled={!token || !childId || !!planTitleFieldError(newTitle) || creatingPlan}
                 onClick={() => {
-                  if (!token || !childId || newTitle.trim().length < 2) return
+                  if (!token || !childId) return
+                  setNewPlanTouched(true)
+                  const tErr = planTitleFieldError(newTitle)
+                  if (tErr) {
+                    setError(tErr)
+                    return
+                  }
                   setCreatingPlan(true)
                   setError(null)
                   void (async () => {

@@ -227,7 +227,7 @@ export function ParentDailyCheckInScreen({ route, navigation }: Props) {
           onChangeText={setNotes}
           multiline
           placeholder={copy.notesPlaceholder}
-          placeholderTextColor="#9c94b0"
+          placeholderTextColor="#94a3b8"
           textAlign={isArabic ? 'right' : 'left'}
         />
       </ScreenCard>
@@ -269,42 +269,42 @@ const styles = StyleSheet.create({
   offlineBannerText: { color: '#92400e', fontWeight: '700' },
   syncBtn: { backgroundColor: '#c86a13', borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
   syncBtnText: { color: '#fff', fontWeight: '800' },
-  sectionTitle: { color: '#17131f', fontWeight: '900', fontSize: 16 },
+  sectionTitle: { color: '#0f172a', fontWeight: '900', fontSize: 16 },
   rtl: { textAlign: 'right', writingDirection: 'rtl' },
   rtlInput: { writingDirection: 'rtl' },
   rowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
   chip: {
-    backgroundColor: '#f4f1fb',
+    backgroundColor: '#dbeafe',
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#dccfff',
+    borderColor: '#bfdbfe',
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
-  chipActive: { backgroundColor: '#6d46d4', borderColor: '#6d46d4' },
-  chipText: { color: '#603fd0', fontWeight: '800', textTransform: 'capitalize' },
+  chipActive: { backgroundColor: '#1d4ed8', borderColor: '#1d4ed8' },
+  chipText: { color: '#1e40af', fontWeight: '800', textTransform: 'capitalize' },
   chipTextActive: { color: '#fff' },
   chipTextArabic: { textTransform: 'none' },
   input: {
-    backgroundColor: '#fdfcff',
+    backgroundColor: '#ffffff',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#dfd6ee',
+    borderColor: '#cbd5e1',
     paddingHorizontal: 12,
     paddingVertical: 11,
-    color: '#17131f',
+    color: '#0f172a',
   },
   notesInput: { minHeight: 92, textAlignVertical: 'top' },
-  muted: { color: '#6d6485' },
+  muted: { color: '#64748b' },
   historyCard: {
-    backgroundColor: '#faf8ff',
+    backgroundColor: '#f8fafc',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e9e0ff',
+    borderColor: '#dbeafe',
     padding: 12,
     gap: 2,
     marginTop: 9,
   },
-  historyTitle: { color: '#17131f', fontWeight: '800' },
-  historyLine: { color: '#534c62', lineHeight: 20 },
+  historyTitle: { color: '#0f172a', fontWeight: '800' },
+  historyLine: { color: '#475569', lineHeight: 20 },
 })

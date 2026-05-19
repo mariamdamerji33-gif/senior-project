@@ -100,10 +100,19 @@ export const api = {
     })
     return data
   },
-  async registerRequest(params: { name: string; email: string; password: string; requestedRole: Role }) {
+  async registerRequest(params: {
+    name: string
+    email: string
+    password: string
+    requestedRole: Role
+    registrationSource?: 'mobile' | 'website'
+  }) {
     const { data } = await http.post<{ ok: boolean; message?: string; immediate?: boolean; user?: AuthUser }>(
       '/api/auth/register',
-      params,
+      {
+        ...params,
+        registrationSource: params.registrationSource ?? 'mobile',
+      },
     )
     return data
   },

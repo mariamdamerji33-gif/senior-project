@@ -48,11 +48,11 @@ function summaryHtml(summary: WeeklySummary) {
       <meta charset="utf-8" />
       <style>
         body { font-family: Arial, sans-serif; color: #1f1630; padding: 24px; }
-        h1 { color: #5f3dc9; margin: 0 0 12px; }
-        .meta { color: #6d6485; margin-bottom: 16px; }
-        .card { border: 1px solid #dfd6ee; border-radius: 10px; padding: 12px; margin-bottom: 10px; background: #faf8ff; }
-        .title { font-size: 14px; color: #534c62; margin-bottom: 4px; }
-        .value { font-size: 22px; font-weight: 700; color: #17131f; }
+        h1 { color: #1e40af; margin: 0 0 12px; }
+        .meta { color: #64748b; margin-bottom: 16px; }
+        .card { border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; margin-bottom: 10px; background: #f8fafc; }
+        .title { font-size: 14px; color: #475569; margin-bottom: 4px; }
+        .value { font-size: 22px; font-weight: 700; color: #0f172a; }
       </style>
     </head>
     <body>
@@ -240,17 +240,17 @@ export function ParentWeeklySummaryScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   refreshText: { textAlign: 'center' },
-  empty: { color: '#6d6485', fontWeight: '600' },
-  cardTitle: { color: '#6d6485', fontWeight: '800', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
-  cardValue: { color: '#17131f', fontSize: 22, fontWeight: '800' },
-  cardSub: { color: '#7c7392', fontSize: 12, marginTop: 6 },
+  empty: { color: '#64748b', fontWeight: '600' },
+  cardTitle: { color: '#64748b', fontWeight: '800', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
+  cardValue: { color: '#0f172a', fontSize: 22, fontWeight: '800' },
+  cardSub: { color: '#64748b', fontSize: 12, marginTop: 6 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   miniCard: {
     width: '47.5%',
     backgroundColor: '#fff',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#dfd6ee',
+    borderColor: '#cbd5e1',
     padding: 14,
     gap: 4,
     shadowColor: '#1e1040',
@@ -259,8 +259,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  miniTitle: { color: '#6d6485', fontWeight: '700', fontSize: 12 },
-  miniValue: { color: '#17131f', fontSize: 20, fontWeight: '800' },
+  miniTitle: { color: '#64748b', fontWeight: '700', fontSize: 12 },
+  miniValue: { color: '#0f172a', fontSize: 20, fontWeight: '800' },
   shareBtn: { marginTop: 8 },
   shareBtnText: { textAlign: 'center' },
 })

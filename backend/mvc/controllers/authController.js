@@ -16,7 +16,8 @@ const { publicAccountJson, publicAccountFromJwtPayload } = require('../../utils/
 const { sendPasswordChangedEmail } = require('../../utils/passwordChangedEmail');
 const { sendPasswordResetEmail } = require('../../utils/passwordResetEmail');
 const { sendAccountCreatedEmail } = require('../../utils/accountCreatedEmail');
-const { familyLoginBlockedOnWeb } = require('../../utils/clientChannel');
+const { emailDeliveryNote } = require('../../utils/emailDeliveryNote');
+const { familyLoginBlockedOnWeb, profilePhotoSignedUrlExpiresSec } = require('../../utils/clientChannel');
 
 function setNoStore(res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -35,7 +36,24 @@ async function login(req, res) {
     }
 
     const data = await userModel.findByEmail(emailNorm);
-    if (!data) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!data) {
+      const regRow = await registrationRequestModel.findLatestByEmail(emailNorm);
+      if (regRow?.status === 'pending') {
+        return res.status(403).json({
+          error: pendingApprovalMessage(regRow.requested_role),
+          code: 'REGISTRATION_PENDING',
+        });
+      }
+      if (regRow?.status === 'rejected') {
+        const label = registrationRoleLabel(regRow.requested_role);
+        const extra = regRow.reject_reason ? ` ${regRow.reject_reason}` : '';
+        return res.status(403).json({
+          error: `Your ${label} account request was not approved.${extra}`.trim(),
+          code: 'REGISTRATION_REJECTED',
+        });
+      }
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
     const check = await verifyPassword(data.password, password);
     if (!check.ok) return res.status(401).json({ error: 'Invalid credentials' });
@@ -89,7 +107,10 @@ async function login(req, res) {
     let outgoingUser = null;
     try {
       const row = await userModel.findProfileById(user.id);
-      outgoingUser = row ? await publicAccountJson(row) : publicAccountFromJwtPayload({ ...user, sub: user.id });
+      const photoTtl = profilePhotoSignedUrlExpiresSec(req);
+      outgoingUser = row
+        ? await publicAccountJson(row, { expiresSec: photoTtl })
+        : publicAccountFromJwtPayload({ ...user, sub: user.id });
     } catch {
       outgoingUser =
         publicAccountFromJwtPayload({ sub: user.id, email: user.email, name: user.name, role: user.role }) || null;
@@ -127,7 +148,10 @@ async function me(req, res) {
     let outgoing = null;
     try {
       const row = await userModel.findProfileById(req.auth.sub);
-      outgoing = row ? await publicAccountJson(row) : publicAccountFromJwtPayload(req.auth);
+      const photoTtl = profilePhotoSignedUrlExpiresSec(req);
+      outgoing = row
+        ? await publicAccountJson(row, { expiresSec: photoTtl })
+        : publicAccountFromJwtPayload(req.auth);
     } catch {
       outgoing = publicAccountFromJwtPayload(req.auth);
     }
@@ -148,10 +172,30 @@ async function me(req, res) {
   }
 }
 
+/** Staff (website) and family (mobile app) sign-up — pending until a School Admin approves. */
+const ROLES_REQUIRING_ADMIN_APPROVAL = new Set(['super_admin', 'manager', 'therapist', 'parent']);
+
+function registrationRoleLabel(role) {
+  const labels = {
+    super_admin: 'School Admin',
+    manager: 'Coordinator',
+    therapist: 'Teacher',
+    parent: 'Family',
+  };
+  return labels[role] || role;
+}
+
+function pendingApprovalMessage(requestedRole) {
+  const label = registrationRoleLabel(requestedRole);
+  if (requestedRole === 'parent') {
+    return `Your ${label} account request is pending. A School Admin must approve it before you can sign in to the mobile app.`;
+  }
+  return `Your ${label} account request is pending. A School Admin must approve it on the website before you can sign in.`;
+}
+
 /**
  * Public registration:
- * - Coordinator / Teacher / Family → account created immediately (yes = sign in now).
- * - School Admin → pending request; an existing super_admin must approve (no = errors; pending = wait).
+ * - School Admin, Coordinator, Teacher (website) and Family/parent (mobile) → pending until School Admin approves.
  */
 async function registerRequest(req, res) {
   try {
@@ -181,19 +225,27 @@ async function registerRequest(req, res) {
 
     const nm = clampString(name, 200);
 
-    if (requestedRole === 'super_admin') {
+    if (ROLES_REQUIRING_ADMIN_APPROVAL.has(requestedRole)) {
+      const rawSource = req.body?.registrationSource ?? req.body?.registration_source;
+      const registration_source =
+        rawSource === 'mobile' || rawSource === 'website'
+          ? rawSource
+          : requestedRole === 'parent'
+            ? 'mobile'
+            : 'website';
       const password_hash = await hashPassword(password);
       await registrationRequestModel.insertPending({
         name: nm || null,
         email: emailNorm,
         password_hash,
         requested_role: requestedRole,
+        registration_source,
       });
       return res.status(201).json({
         ok: true,
         immediate: false,
-        message:
-          'Your School Admin request is pending. Another administrator must approve it before you can sign in.',
+        message: pendingApprovalMessage(requestedRole),
+        requestedRole,
       });
     }
 
@@ -231,13 +283,25 @@ async function registerRequest(req, res) {
     if (code === '23505' || /duplicate key|unique constraint/i.test(msg)) {
       return res.status(409).json({
         error: /registration_requests|pending/i.test(msg)
-          ? 'A pending School Admin request already exists for this email'
+          ? 'A pending registration request already exists for this email'
           : 'An account with this email already exists',
+      });
+    }
+    if (code === 'MISSING_SERVICE_ROLE' || err?.statusCode === 503) {
+      return res.status(503).json({
+        error: 'Registration is not available until the server database is fully configured.',
+        hint: 'Add SUPABASE_SERVICE_ROLE_KEY to backend/.env and restart the API. In Supabase → SQL editor, run supabase/registration_requests.sql if needed.',
       });
     }
     if (code === '42501' || /row-level security|RLS/i.test(msg)) {
       return res.status(503).json({
         error: 'Database blocked this write (RLS). Configure SUPABASE_SERVICE_ROLE_KEY in backend/.env.',
+      });
+    }
+    if (/relation.*registration_requests|registration_requests.*does not exist|42P01|PGRST205/i.test(msg)) {
+      return res.status(503).json({
+        error: 'Registration requests table is missing in the database.',
+        hint: 'In Supabase → SQL editor, run supabase/registration_requests.sql (or supabase/run_all.sql), then try again.',
       });
     }
     res.status(500).json({
@@ -248,7 +312,7 @@ async function registerRequest(req, res) {
 }
 
 /**
- * Public: check School Admin registration / account state for an email (for return-visit notifications).
+ * Public: check registration / account state for an email (for return-visit notifications).
  * Does not reveal whether an arbitrary email is in the system beyond what the user already submitted.
  */
 async function registrationStatus(req, res) {
@@ -277,16 +341,20 @@ async function registrationStatus(req, res) {
     }
 
     if (reqRow.status === 'pending') {
+      const label = registrationRoleLabel(reqRow.requested_role);
       return res.json({
         status: 'pending',
-        message: 'Your School Admin request is still waiting for approval.',
+        requestedRole: reqRow.requested_role,
+        message: `Your ${label} account request is still waiting for School Admin approval.`,
       });
     }
 
     if (reqRow.status === 'rejected') {
+      const label = registrationRoleLabel(reqRow.requested_role);
       return res.json({
         status: 'rejected',
-        message: 'Your School Admin request was not approved.',
+        requestedRole: reqRow.requested_role,
+        message: `Your ${label} account request was not approved.`,
         reject_reason: reqRow.reject_reason || null,
       });
     }
@@ -449,20 +517,25 @@ async function resetPassword(req, res) {
     }
 
     const notifyTo = String(row.email || '').trim();
-    void sendPasswordChangedEmail({
-      to: notifyTo,
-      name: row.name != null ? String(row.name) : null,
-    })
-      .then((mailRes) => {
-        if (mailRes?.skipped) {
-          console.warn('[auth] password-changed email skipped:', mailRes.reason || mailRes);
-        }
-      })
-      .catch((mailErr) => {
-        console.error('[auth] password-changed email failed:', mailErr?.message || mailErr);
+    let emailNotice = null;
+    try {
+      const mailRes = await sendPasswordChangedEmail({
+        to: notifyTo,
+        name: row.name != null ? String(row.name) : null,
       });
+      emailNotice = emailDeliveryNote(mailRes, {
+        sentLabel: 'A confirmation email was sent to your inbox.',
+      });
+    } catch (mailErr) {
+      console.error('[auth] password-changed email failed:', mailErr?.message || mailErr);
+      emailNotice = 'Password updated. Confirmation email could not be sent — check with your school if you did not request this change.';
+    }
 
-    res.json({ ok: true, message: 'Your password was updated. You can sign in now.' });
+    res.json({
+      ok: true,
+      message: 'Your password was updated. You can sign in now.',
+      emailNotice,
+    });
   } catch (err) {
     res.status(500).json({
       error: 'Server error',

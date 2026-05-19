@@ -37,7 +37,7 @@ export function AccountProfilePage() {
     setBirthDate(user?.birthDate ?? '')
     setPhoneError(null)
     setBirthError(null)
-  }, [user?.id])
+  }, [user?.id, user?.phone, user?.birthDate])
 
   function uploadPhoto(f: File) {
     if (!token || busy) return

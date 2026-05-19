@@ -10,34 +10,38 @@ function normColor(value: unknown): string | null {
   return value.trim().toLowerCase()
 }
 
-/** Map legacy and website hex values to theme tokens when high contrast is on. */
+/** Map legacy hex values to theme tokens when high contrast is on. */
 function mapColor(hex: string | null, appColors: AppThemeColors): string | undefined {
   if (!hex) return undefined
   const map: Record<string, string> = {
     '#f2eff9': appColors.pageBg,
     '#eff6ff': appColors.pageBg,
     '#faf8ff': appColors.surfaceSoft,
+    '#f8fafc': appColors.surfaceSoft,
     '#f4f1fb': appColors.secondarySurface,
+    '#dbeafe': appColors.secondarySurface,
     '#fff': appColors.surface,
     '#ffffff': appColors.surface,
-    '#17131f': appColors.textTitle,
-    '#3b3150': appColors.text,
-    '#534c62': appColors.text,
-    '#6e6878': appColors.textMuted,
-    '#6d6485': appColors.textMuted,
-    '#7c7392': appColors.textMuted,
-    '#9188a8': appColors.textMuted,
-    '#9c94b0': appColors.textMuted,
+    '#0f172a': appColors.textTitle,
+    '#475569': appColors.text,
+    '#64748b': appColors.textMuted,
+    '#94a3b8': appColors.inputPlaceholder,
+    '#93c5fd': appColors.onDarkEyebrow,
+    '#bfdbfe': appColors.onDarkMuted,
+    '#e2e8f0': appColors.onDarkSubtitle,
     '#dfd6ee': appColors.outlineBorder,
+    '#cbd5e1': appColors.secondaryBorder,
     '#cfc4e6': appColors.secondaryBorder,
     '#6d46d4': appColors.primary,
     '#1d4ed8': appColors.primary,
-    '#2563eb': appColors.primary,
+    '#2563eb': appColors.primaryBright,
     '#5a38b8': appColors.primaryDark,
     '#1e40af': appColors.primaryDark,
+    '#1e3a8a': appColors.primaryDark,
     '#8b6ae8': appColors.primary,
     '#5f3dc9': appColors.primaryDark,
     '#0f766e': appColors.calm,
+    '#0284c7': appColors.calm,
     '#b91c1c': appColors.danger,
     '#991b1b': appColors.danger,
     '#211a2e': appColors.primaryDeep,

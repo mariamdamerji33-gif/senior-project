@@ -1,9 +1,10 @@
 import { Image, StyleSheet, View } from 'react-native'
+import { colors } from '../../../theme/colors'
 
 const LOGO = require('../../../../assets/icon.png')
 
 /**
- * Full-screen decorative layer: soft brand-colored shapes + faint logo watermark.
+ * Full-screen decorative layer — blue brand wallpaper (aligned with website).
  * Place behind navigation or screen content; screen roots should use transparent backgrounds.
  */
 export function BrandWallpaperDecor() {
@@ -23,13 +24,14 @@ const styles = StyleSheet.create({
   layer: {
     ...StyleSheet.absoluteFillObject,
     overflow: 'hidden',
+    backgroundColor: colors.pageBg,
   },
   blobTop: {
     position: 'absolute',
     width: 440,
     height: 440,
     borderRadius: 220,
-    backgroundColor: 'rgba(109, 70, 212, 0.11)',
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
     top: -150,
     right: -130,
   },
@@ -38,7 +40,7 @@ const styles = StyleSheet.create({
     width: 400,
     height: 400,
     borderRadius: 200,
-    backgroundColor: 'rgba(13, 148, 136, 0.07)',
+    backgroundColor: 'rgba(29, 78, 216, 0.08)',
     bottom: -120,
     left: -140,
   },
@@ -47,7 +49,7 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 150,
-    backgroundColor: 'rgba(109, 70, 212, 0.06)',
+    backgroundColor: 'rgba(96, 165, 250, 0.08)',
     top: '36%',
     left: -100,
   },
@@ -61,6 +63,6 @@ const styles = StyleSheet.create({
   mark: {
     width: 320,
     height: 320,
-    opacity: 0.085,
+    opacity: 0.04,
   },
 })

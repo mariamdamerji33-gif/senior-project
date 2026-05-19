@@ -6,6 +6,7 @@ import { Card } from '@/mvc/views/components/ui/Card'
 import { Button } from '@/mvc/views/components/ui/Button'
 import { useConfirmDialog } from '@/mvc/views/components/ui/useConfirmDialog'
 import { ProfileAvatarPicker } from '@/mvc/views/components/profile/ProfileAvatarPicker'
+import { optionalEmailFieldError } from '@/utils/fieldValidation'
 import { PHONE_INPUT_PLACEHOLDER, formatPhoneDisplay, normalizePhoneForApi } from '@/utils/phoneInput'
 
 type UserLite = { id: string; name: string | null; email: string; role?: string | null }
@@ -531,7 +532,16 @@ export function StudentProfilePage() {
                     const formEl = e.currentTarget
                     const fd = new FormData(formEl)
                     const name = String(fd.get('name') || '').trim()
-                    if (name.length < 2) return
+                    if (name.length < 2) {
+                      setContactsError('Contact name must be at least 2 characters.')
+                      return
+                    }
+                    const emailRaw = String(fd.get('email') || '').trim()
+                    const emailErr = optionalEmailFieldError(emailRaw)
+                    if (emailErr) {
+                      setContactsError(emailErr)
+                      return
+                    }
                     const phoneRaw = String(fd.get('phone') || '').trim()
                     const phoneNorm = normalizePhoneForApi(phoneRaw)
                     if (!phoneNorm.ok) {
@@ -546,7 +556,7 @@ export function StudentProfilePage() {
                           name,
                           relation: String(fd.get('relation') || '').trim() || undefined,
                           phone: phoneNorm.e164 || undefined,
-                          email: String(fd.get('email') || '').trim() || undefined,
+                          email: emailRaw || undefined,
                           notes: String(fd.get('notes') || '').trim() || undefined,
                           isEmergency: true,
                         })
@@ -570,7 +580,7 @@ export function StudentProfilePage() {
                     className="ui-input"
                     inputMode="tel"
                   />
-                  <input name="email" placeholder="Email (optional)" className="ui-input" />
+                  <input name="email" type="email" placeholder="Email (optional)" className="ui-input" />
                   <input name="notes" placeholder="Notes (optional)" className="ui-input" />
                   <Button type="submit" disabled={savingContact}>
                     {savingContact ? 'Saving…' : 'Add contact'}

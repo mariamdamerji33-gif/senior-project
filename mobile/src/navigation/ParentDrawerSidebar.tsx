@@ -6,8 +6,8 @@ import { getFocusedRouteNameFromRoute } from '@react-navigation/native'
 import type { NavigationState, PartialState } from '@react-navigation/native'
 import { useAuth } from '../mvc/controllers/AuthController'
 import { useLanguage } from '../mvc/controllers/LanguageController'
-import { DisplayComfortToolbar } from '../mvc/views/components/DisplayComfortToolbar'
 import { api } from '../mvc/models/api'
+import { colors } from '../theme/colors'
 import type { ParentDrawerParamList } from './parentDrawerTypes'
 
 const LAST_CHILD_PREFIX = 'asp_mobile_last_child_v1'
@@ -168,27 +168,27 @@ export function ParentDrawerSidebar(props: DrawerContentComponentProps) {
         </Pressable>
 
         <Pressable accessibilityRole="button" accessibilityLabel={copy.board} accessibilityState={{ selected: isBoard, busy: resolvingRoute === 'ParentDashboardSheet', disabled: !!resolvingRoute }} disabled={!!resolvingRoute} style={[isBoard ? styles.leftDashBtnActive : styles.leftDashBtn, resolvingRoute && styles.leftDashBtnMuted]} onPress={() => void navWithChild('ParentDashboardSheet', true)}>
-          {resolvingRoute === 'ParentDashboardSheet' ? <ActivityIndicator color={isBoard ? '#6d46d4' : '#ddd6fe'} size="small" /> : <Text style={isBoard ? styles.leftDashIconActive : styles.leftDashIcon}>▦</Text>}
+          {resolvingRoute === 'ParentDashboardSheet' ? <ActivityIndicator color={isBoard ? '#1d4ed8' : '#bfdbfe'} size="small" /> : <Text style={isBoard ? styles.leftDashIconActive : styles.leftDashIcon}>▦</Text>}
           <Text style={isBoard ? styles.leftDashTextActive : styles.leftDashText}>{copy.board}</Text>
         </Pressable>
 
         <Pressable accessibilityRole="button" accessibilityLabel={copy.daily} accessibilityState={{ selected: isDaily, busy: resolvingRoute === 'ParentDailyCheckIn', disabled: !!resolvingRoute }} disabled={!!resolvingRoute} style={[isDaily ? styles.leftDashBtnActive : styles.leftDashBtn, resolvingRoute && styles.leftDashBtnMuted]} onPress={() => void navWithChild('ParentDailyCheckIn', true)}>
-          {resolvingRoute === 'ParentDailyCheckIn' ? <ActivityIndicator color={isDaily ? '#6d46d4' : '#ddd6fe'} size="small" /> : <Text style={isDaily ? styles.leftDashIconActive : styles.leftDashIcon}>✓</Text>}
+          {resolvingRoute === 'ParentDailyCheckIn' ? <ActivityIndicator color={isDaily ? '#1d4ed8' : '#bfdbfe'} size="small" /> : <Text style={isDaily ? styles.leftDashIconActive : styles.leftDashIcon}>✓</Text>}
           <Text style={isDaily ? styles.leftDashTextActive : styles.leftDashText}>{copy.daily}</Text>
         </Pressable>
 
         <Pressable accessibilityRole="button" accessibilityLabel={copy.play} accessibilityState={{ selected: isPlay, busy: resolvingRoute === 'Activities', disabled: !!resolvingRoute }} disabled={!!resolvingRoute} style={[isPlay ? styles.leftDashBtnActive : styles.leftDashBtn, resolvingRoute && styles.leftDashBtnMuted]} onPress={() => void navWithChild('Activities', true)}>
-          {resolvingRoute === 'Activities' ? <ActivityIndicator color={isPlay ? '#6d46d4' : '#ddd6fe'} size="small" /> : <Text style={isPlay ? styles.leftDashIconActive : styles.leftDashIcon}>★</Text>}
+          {resolvingRoute === 'Activities' ? <ActivityIndicator color={isPlay ? '#1d4ed8' : '#bfdbfe'} size="small" /> : <Text style={isPlay ? styles.leftDashIconActive : styles.leftDashIcon}>★</Text>}
           <Text style={isPlay ? styles.leftDashTextActive : styles.leftDashText}>{copy.play}</Text>
         </Pressable>
 
         <Pressable accessibilityRole="button" accessibilityLabel={copy.chat} accessibilityState={{ selected: isChat, busy: resolvingRoute === 'ParentChat', disabled: !!resolvingRoute }} disabled={!!resolvingRoute} style={[isChat ? styles.leftDashBtnActive : styles.leftDashBtn, resolvingRoute && styles.leftDashBtnMuted]} onPress={() => void navWithChild('ParentChat', true)}>
-          {resolvingRoute === 'ParentChat' ? <ActivityIndicator color={isChat ? '#6d46d4' : '#ddd6fe'} size="small" /> : <Text style={isChat ? styles.leftDashIconActive : styles.leftDashIcon}>✉</Text>}
+          {resolvingRoute === 'ParentChat' ? <ActivityIndicator color={isChat ? '#1d4ed8' : '#bfdbfe'} size="small" /> : <Text style={isChat ? styles.leftDashIconActive : styles.leftDashIcon}>✉</Text>}
           <Text style={isChat ? styles.leftDashTextActive : styles.leftDashText}>{copy.chat}</Text>
         </Pressable>
 
         <Pressable accessibilityRole="button" accessibilityLabel={copy.reports} accessibilityState={{ selected: isReports, busy: resolvingRoute === 'ParentProgressReports', disabled: !!resolvingRoute }} disabled={!!resolvingRoute} style={[isReports ? styles.leftDashBtnActive : styles.leftDashBtn, resolvingRoute && styles.leftDashBtnMuted]} onPress={() => void navWithChild('ParentProgressReports', true)}>
-          {resolvingRoute === 'ParentProgressReports' ? <ActivityIndicator color={isReports ? '#6d46d4' : '#ddd6fe'} size="small" /> : <Text style={isReports ? styles.leftDashIconActive : styles.leftDashIcon}>↗</Text>}
+          {resolvingRoute === 'ParentProgressReports' ? <ActivityIndicator color={isReports ? '#1d4ed8' : '#bfdbfe'} size="small" /> : <Text style={isReports ? styles.leftDashIconActive : styles.leftDashIcon}>↗</Text>}
           <Text style={isReports ? styles.leftDashTextActive : styles.leftDashText}>{copy.reports}</Text>
         </Pressable>
 
@@ -196,8 +196,6 @@ export function ParentDrawerSidebar(props: DrawerContentComponentProps) {
           <Text style={isMenuHelp ? styles.leftDashIconActive : styles.leftDashIcon}>?</Text>
           <Text style={isMenuHelp ? styles.leftDashTextActive : styles.leftDashText}>{copy.guide}</Text>
         </Pressable>
-
-        <DisplayComfortToolbar variant="drawer" />
       </ScrollView>
     </View>
   )
@@ -206,7 +204,7 @@ export function ParentDrawerSidebar(props: DrawerContentComponentProps) {
 const styles = StyleSheet.create({
   wrap: {
     flex: 1,
-    backgroundColor: '#211a2e',
+    backgroundColor: colors.primaryDeep,
     borderTopRightRadius: 28,
     borderBottomRightRadius: 28,
     paddingBottom: 12,
@@ -219,7 +217,7 @@ const styles = StyleSheet.create({
     width: 132,
     height: 132,
     borderRadius: 66,
-    backgroundColor: 'rgba(124,77,255,0.36)',
+    backgroundColor: 'rgba(37, 99, 235, 0.28)',
     top: -42,
     right: -54,
   },
@@ -257,11 +255,11 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   leftDashLogoWrapActive: {
-    borderColor: '#6d46d4',
+    borderColor: colors.primary,
   },
   leftDashLogo: { width: 36, height: 36, borderRadius: 10 },
   leftDashTitle: {
-    color: '#c4b5fd',
+    color: colors.onDarkEyebrow,
     fontSize: 10,
     fontWeight: '900',
     textAlign: 'center',
@@ -293,8 +291,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   leftDashBtnMuted: { opacity: 0.72 },
-  leftDashIcon: { color: '#ddd6fe', fontSize: 16, fontWeight: '900' },
-  leftDashText: { color: '#ddd6fe', fontSize: 9, fontWeight: '900', textAlign: 'center' },
-  leftDashIconActive: { color: '#6d46d4', fontSize: 16, fontWeight: '900' },
-  leftDashTextActive: { color: '#6d46d4', fontSize: 9, fontWeight: '900', textAlign: 'center' },
+  leftDashIcon: { color: colors.onDarkMuted, fontSize: 16, fontWeight: '900' },
+  leftDashText: { color: colors.onDarkMuted, fontSize: 9, fontWeight: '900', textAlign: 'center' },
+  leftDashIconActive: { color: colors.primary, fontSize: 16, fontWeight: '900' },
+  leftDashTextActive: { color: colors.primary, fontSize: 9, fontWeight: '900', textAlign: 'center' },
 })

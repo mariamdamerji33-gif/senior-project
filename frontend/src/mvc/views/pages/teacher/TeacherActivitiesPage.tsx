@@ -9,6 +9,11 @@ import { TextInput } from '@/mvc/views/components/ui/forms/TextInput'
 import { TextArea } from '@/mvc/views/components/ui/forms/TextArea'
 import { useAuth } from '@/mvc/controllers'
 import { api } from '@/mvc/models/apiClient'
+import { FieldError } from '@/mvc/views/components/ui/forms/FieldError'
+import {
+  activityDescriptionFieldError,
+  activityTitleFieldError,
+} from '@/utils/fieldValidation'
 
 type Activity = {
   id: string
@@ -108,8 +113,13 @@ export function TeacherActivitiesPage() {
     setEditError(null)
   }
 
+  const [formTouched, setFormTouched] = useState(false)
+
   const canCreate =
-    !!token && title.trim().length >= 3 && description.trim().length >= 8 && !saving
+    !!token &&
+    !activityTitleFieldError(title) &&
+    !activityDescriptionFieldError(description) &&
+    !saving
 
   return (
     <div className="ui-page">
@@ -136,24 +146,40 @@ export function TeacherActivitiesPage() {
             <TextInput
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onBlur={() => setFormTouched(true)}
               placeholder="e.g. PECS cards"
             />
+            <FieldError message={activityTitleFieldError(title)} show={formTouched} />
           </label>
           <label className="ui-progressForm__field" style={{ flex: '2 1 280px' }}>
             <span>Description</span>
             <TextInput
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              onBlur={() => setFormTouched(true)}
               placeholder="Short instructions (min. 8 characters)"
             />
+            <FieldError message={activityDescriptionFieldError(description)} show={formTouched} />
           </label>
           <Button
             type="button"
             variant="primary"
             className="ui-progressForm__submit"
+            title={
+              activityTitleFieldError(title) ||
+              activityDescriptionFieldError(description) ||
+              undefined
+            }
             disabled={!canCreate}
             onClick={() => {
               if (!canCreate) return
+              setFormTouched(true)
+              const tErr = activityTitleFieldError(title)
+              const dErr = activityDescriptionFieldError(description)
+              if (tErr || dErr) {
+                setError(tErr || dErr)
+                return
+              }
               setSaving(true)
               setError(null)
               void (async () => {

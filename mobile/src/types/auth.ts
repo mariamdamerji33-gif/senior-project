@@ -10,4 +10,6 @@ export type AuthUser = {
   birthDate?: string | null
   ageYears?: number | null
   profilePhotoUrl?: string | null
+  /** Supabase storage object path; stable across signed URL refreshes (mobile uses it to avoid churning the image URI). */
+  profilePhotoStoragePath?: string | null
 }

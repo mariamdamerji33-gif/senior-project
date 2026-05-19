@@ -2,7 +2,6 @@ import { createDrawerNavigator, type DrawerContentComponentProps } from '@react-
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native'
 import { colors } from '../theme/colors'
 import { useAuth } from '../mvc/controllers/AuthController'
-import { DisplayComfortToolbar } from '../mvc/views/components/DisplayComfortToolbar'
 import { AdminAccountProfileScreen, AdminManagerHomeScreen } from '../mvc/views/screens'
 import { useConfirmDialog } from '../mvc/views/components/useConfirmDialog'
 import type { AdminDrawerParamList } from './parentDrawerTypes'
@@ -38,7 +37,6 @@ export function AdminDrawerSidebar(props: DrawerContentComponentProps) {
           <Text style={active === 'Summary' ? styles.iconOn : styles.icon}>▦</Text>
           <Text style={active === 'Summary' ? styles.labOn : styles.lab}>Summary</Text>
         </Pressable>
-        <DisplayComfortToolbar variant="drawer" />
       </ScrollView>
       <View style={styles.footer}>
         <Pressable
@@ -89,7 +87,7 @@ export function AdminDrawerNavigator() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: '#211a2e', borderTopRightRadius: 22, borderBottomRightRadius: 22 },
+  wrap: { flex: 1, backgroundColor: '#0f172a', borderTopRightRadius: 22, borderBottomRightRadius: 22 },
   scroll: { paddingTop: 14, paddingHorizontal: 8, gap: 10, paddingBottom: 12 },
   logoWrap: {
     width: 46,
@@ -103,11 +101,11 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   logoWrapActive: {
-    borderColor: '#6d46d4',
+    borderColor: '#1d4ed8',
   },
   logo: { width: 36, height: 36, borderRadius: 10 },
   menu: {
-    color: '#c4b5fd',
+    color: '#93c5fd',
     fontSize: 10,
     fontWeight: '900',
     textAlign: 'center',
@@ -132,10 +130,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: '#fff',
   },
-  icon: { color: '#ddd6fe', fontSize: 16, fontWeight: '900' },
-  lab: { color: '#ddd6fe', fontSize: 9, fontWeight: '900' },
-  iconOn: { color: '#6d46d4', fontSize: 16, fontWeight: '900' },
-  labOn: { color: '#6d46d4', fontSize: 9, fontWeight: '900', textAlign: 'center' },
+  icon: { color: '#bfdbfe', fontSize: 16, fontWeight: '900' },
+  lab: { color: '#bfdbfe', fontSize: 9, fontWeight: '900' },
+  iconOn: { color: '#1d4ed8', fontSize: 16, fontWeight: '900' },
+  labOn: { color: '#1d4ed8', fontSize: 9, fontWeight: '900', textAlign: 'center' },
   footer: { paddingHorizontal: 6, paddingBottom: 10 },
   outBtn: {
     minHeight: 44,

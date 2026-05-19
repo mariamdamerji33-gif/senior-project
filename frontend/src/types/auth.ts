@@ -10,4 +10,5 @@ export type AuthUser = {
   birthDate?: string | null
   ageYears?: number | null
   profilePhotoUrl?: string | null
+  profilePhotoStoragePath?: string | null
 }

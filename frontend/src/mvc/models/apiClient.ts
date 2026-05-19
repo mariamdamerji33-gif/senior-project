@@ -127,12 +127,13 @@ export const api = {
     csrfTokenCache = null
     return request<{ ok: boolean }>('/api/auth/logout', { method: 'POST' })
   },
-  /** Public: register (immediate for most roles; School Admin stays pending until approved). */
+  /** Public: register (website staff roles pending until School Admin approves; family is mobile-only). */
   async registerRequest(params: {
     name: string
     email: string
     password: string
     requestedRole: 'super_admin' | 'manager' | 'therapist' | 'parent'
+    registrationSource?: 'mobile' | 'website'
   }) {
     return request<{ ok: boolean; message?: string; immediate?: boolean; user?: unknown }>(
       '/api/auth/register',
@@ -143,6 +144,7 @@ export const api = {
           email: params.email,
           password: params.password,
           requestedRole: params.requestedRole,
+          registrationSource: params.registrationSource ?? 'website',
         }),
       },
     )
@@ -303,22 +305,38 @@ export const api = {
   },
   async adminRegistrationRequests(token: string, status: 'pending' | 'approved' | 'rejected' | 'all' = 'pending') {
     const q = status === 'pending' ? '' : `?status=${encodeURIComponent(status)}`
-    return request<{ requests: any[] }>(`/api/admin/registration-requests${q}`, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    return request<{
+      requests: any[]
+      meta?: { counts?: { pending: number; approved: number; rejected: number; all: number } }
+    }>(
+      `/api/admin/registration-requests${q}`,
+      {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    )
   },
   async adminApproveRegistrationRequest(
     token: string,
     requestId: string,
     payload?: { role?: 'super_admin' | 'manager' | 'therapist' | 'parent' },
   ) {
-    return request<{ user: any }>(
+    return request<{ user: any; message?: string }>(
       `/api/admin/registration-requests/${encodeURIComponent(requestId)}/approve`,
       {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload || {}),
+      },
+    )
+  },
+  async adminReopenRegistrationRequest(token: string, requestId: string) {
+    return request<{ request: unknown }>(
+      `/api/admin/registration-requests/${encodeURIComponent(requestId)}/reopen`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({}),
       },
     )
   },

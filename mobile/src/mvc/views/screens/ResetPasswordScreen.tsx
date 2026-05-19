@@ -18,7 +18,7 @@ import { useLanguage } from '../../controllers/LanguageController'
 import { api } from '../../models/api'
 import type { RootStackParamList } from '../../../navigation/types'
 import { appButton } from '../../../theme'
-import { DisplayComfortToolbar } from '../components/DisplayComfortToolbar'
+import { PasswordField } from '../components/PasswordField'
 import { meetsRegisterPasswordRules, REGISTER_PASSWORD_HINT } from '../../../utils/passwordRules'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ResetPassword'>
@@ -92,8 +92,6 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
     <SafeAreaView style={[styles.safe, high && styles.safeHc]}>
       <KeyboardAvoidingView style={styles.keyboardAvoider} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <DisplayComfortToolbar variant="surface" style={high ? { borderColor: '#0f172a', backgroundColor: '#f8fafc' } : undefined} />
-
           <View style={[styles.card, high && styles.cardHc]}>
             <Text style={[styles.title, t(styles.title), isArabic && styles.rtl]}>{copy.title}</Text>
             <Text style={[styles.lead, t(styles.lead), isArabic && styles.rtl]}>{copy.lead}</Text>
@@ -104,33 +102,35 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
               value={token}
               onChangeText={setToken}
               placeholder="…"
-              placeholderTextColor="#9188a8"
+              placeholderTextColor="#94a3b8"
               autoCapitalize="none"
               autoCorrect={false}
               editable={!busy}
             />
 
             <Text style={[styles.label, t(styles.label), isArabic && styles.rtl, { marginTop: 8 }]}>{copy.newPw}</Text>
-            <TextInput
-              style={[styles.input, t(styles.input), isArabic && styles.rtlInput]}
+            <PasswordField
+              inputStyle={[styles.input, t(styles.input), isArabic && styles.rtlInput]}
               value={password}
               onChangeText={setPassword}
               placeholder="••••••••"
-              placeholderTextColor="#9188a8"
-              secureTextEntry
+              placeholderTextColor="#94a3b8"
               autoCapitalize="none"
+              autoComplete="new-password"
+              rtl={isArabic}
               editable={!busy}
             />
 
             <Text style={[styles.label, t(styles.label), isArabic && styles.rtl, { marginTop: 8 }]}>{copy.confirm}</Text>
-            <TextInput
-              style={[styles.input, t(styles.input), isArabic && styles.rtlInput]}
+            <PasswordField
+              inputStyle={[styles.input, t(styles.input), isArabic && styles.rtlInput]}
               value={confirm}
               onChangeText={setConfirm}
               placeholder="••••••••"
-              placeholderTextColor="#9188a8"
-              secureTextEntry
+              placeholderTextColor="#94a3b8"
               autoCapitalize="none"
+              autoComplete="new-password"
+              rtl={isArabic}
               editable={!busy}
             />
 
@@ -155,7 +155,11 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
                 void (async () => {
                   try {
                     const res = await api.resetPassword({ token: token.trim(), password })
-                    Alert.alert(res.message || copy.successTitle, copy.successBody, [
+                    const body =
+                      res && typeof res === 'object' && 'emailNotice' in res && typeof res.emailNotice === 'string'
+                        ? `${res.message || copy.successTitle}\n\n${res.emailNotice}`
+                        : copy.successBody
+                    Alert.alert(res.message || copy.successTitle, body, [
                       { text: 'OK', onPress: () => navigation.replace('Login') },
                     ])
                   } catch (ex: unknown) {
@@ -182,7 +186,7 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f2eff9' },
+  safe: { flex: 1, backgroundColor: '#eff6ff' },
   safeHc: { backgroundColor: '#ffffff' },
   keyboardAvoider: { flex: 1 },
   wrap: { flexGrow: 1, padding: 18, paddingBottom: 28, gap: 14 },
@@ -190,28 +194,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: '#dfd6ee',
+    borderColor: '#cbd5e1',
     padding: 18,
     gap: 8,
   },
   cardHc: { borderColor: '#0f172a', borderWidth: 2 },
-  title: { color: '#17131f', fontSize: 22, fontWeight: '900', letterSpacing: -0.3 },
-  lead: { color: '#534c62', fontSize: 14, lineHeight: 21, fontWeight: '600', marginBottom: 4 },
-  label: { color: '#534c62', fontWeight: '800', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.6 },
+  title: { color: '#0f172a', fontSize: 22, fontWeight: '900', letterSpacing: -0.3 },
+  lead: { color: '#475569', fontSize: 14, lineHeight: 21, fontWeight: '600', marginBottom: 4 },
+  label: { color: '#475569', fontWeight: '800', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.6 },
   input: {
     borderWidth: 1,
-    borderColor: '#dfd6ee',
+    borderColor: '#cbd5e1',
     borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#17131f',
-    backgroundColor: '#fdfcff',
+    color: '#0f172a',
+    backgroundColor: '#ffffff',
   },
-  hint: { color: '#6d6485', fontSize: 12, lineHeight: 18, fontWeight: '600', marginTop: 4 },
+  hint: { color: '#64748b', fontSize: 12, lineHeight: 18, fontWeight: '600', marginTop: 4 },
   rtl: { writingDirection: 'rtl', textAlign: 'right' },
   rtlInput: { textAlign: 'right', writingDirection: 'rtl' },
   err: { color: '#b91c1c', fontWeight: '700', fontSize: 14, marginTop: 6 },
   backLink: { marginTop: 8, paddingVertical: 6 },
-  backLinkText: { color: '#6d46d4', fontWeight: '800', fontSize: 15 },
+  backLinkText: { color: '#1d4ed8', fontWeight: '800', fontSize: 15 },
 })

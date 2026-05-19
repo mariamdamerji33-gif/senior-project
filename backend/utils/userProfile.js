@@ -55,6 +55,7 @@ async function publicAccountJson(dbRow, { expiresSec = 3600 } = {}) {
   }
 
   const roleValue = dbRow.role || null;
+  const storagePath = dbRow.profile_photo_storage_path ? String(dbRow.profile_photo_storage_path).trim() : null;
 
   return {
     id: String(dbRow.id),
@@ -65,6 +66,7 @@ async function publicAccountJson(dbRow, { expiresSec = 3600 } = {}) {
     phone: dbRow.phone ?? null,
     birthDate: birthDate,
     ageYears: ageYearsFromBirthDateYmd(String(birthDate || '')),
+    profilePhotoStoragePath: storagePath || null,
     profilePhotoUrl,
   };
 }
@@ -82,6 +84,7 @@ function publicAccountFromJwtPayload(auth) {
     phone: null,
     birthDate: null,
     ageYears: null,
+    profilePhotoStoragePath: null,
     profilePhotoUrl: null,
   };
 }

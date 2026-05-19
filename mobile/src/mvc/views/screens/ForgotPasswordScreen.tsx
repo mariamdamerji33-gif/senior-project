@@ -18,7 +18,7 @@ import { useLanguage } from '../../controllers/LanguageController'
 import { api } from '../../models/api'
 import type { RootStackParamList } from '../../../navigation/types'
 import { appButton } from '../../../theme'
-import { DisplayComfortToolbar } from '../components/DisplayComfortToolbar'
+import { emailFieldError, isValidEmail } from '../../../utils/fieldValidation'
 import { REGISTER_PASSWORD_HINT } from '../../../utils/passwordRules'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ForgotPassword'>
@@ -33,6 +33,8 @@ const COPY = {
     sending: 'Sending…',
     back: '← Back to sign in',
     needEmail: 'Enter a valid email.',
+    emailRequired: 'Email is required.',
+    invalidEmail: 'Enter a valid email address (e.g. you@example.com).',
     failed: 'Request failed',
     devContinue: 'Set new password (dev)',
   },
@@ -45,6 +47,8 @@ const COPY = {
     sending: 'جاري الإرسال…',
     back: '← العودة لتسجيل الدخول',
     needEmail: 'يرجى إدخال بريد صالح.',
+    emailRequired: 'البريد الإلكتروني مطلوب.',
+    invalidEmail: 'أدخل بريدًا إلكترونيًا صالحًا (مثل you@example.com).',
     failed: 'فشل الطلب',
     devContinue: 'تعيين كلمة جديدة (تطوير)',
   },
@@ -66,6 +70,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
   const copy = COPY[language]
 
   const [email, setEmail] = useState('')
+  const [emailTouched, setEmailTouched] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const [done, setDone] = useState<{
@@ -74,14 +79,20 @@ export function ForgotPasswordScreen({ navigation }: Props) {
     devResetToken?: string
   } | null>(null)
 
-  const canSubmit = email.trim().length > 4 && !busy
+  const canSubmit = isValidEmail(email) && !busy
+
+  const emailInlineError = useMemo(() => {
+    if (!emailTouched) return ''
+    const fieldErr = emailFieldError(email)
+    if (!fieldErr) return ''
+    if (fieldErr === 'Email is required.') return copy.emailRequired
+    return copy.invalidEmail
+  }, [email, emailTouched, copy.emailRequired, copy.invalidEmail])
 
   return (
     <SafeAreaView style={[styles.safe, high && styles.safeHc]}>
       <KeyboardAvoidingView style={styles.keyboardAvoider} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <DisplayComfortToolbar variant="surface" style={high ? { borderColor: '#0f172a', backgroundColor: '#f8fafc' } : undefined} />
-
           <View style={[styles.card, high && styles.cardHc]}>
             <Text style={[styles.title, t(styles.title), isArabic && styles.rtl]}>{copy.title}</Text>
             <Text style={[styles.lead, t(styles.lead), isArabic && styles.rtl]}>{copy.lead}</Text>
@@ -118,13 +129,19 @@ export function ForgotPasswordScreen({ navigation }: Props) {
                   style={[styles.input, t(styles.input), isArabic && styles.rtlInput]}
                   value={email}
                   onChangeText={setEmail}
+                  onBlur={() => setEmailTouched(true)}
                   placeholder={copy.placeholder}
-                  placeholderTextColor="#9188a8"
+                  placeholderTextColor="#94a3b8"
                   autoCapitalize="none"
                   autoComplete="email"
                   keyboardType="email-address"
                   editable={!busy}
                 />
+                {emailInlineError ? (
+                  <Text style={[styles.fieldErr, t(styles.fieldErr), isArabic && styles.rtl]} accessibilityRole="alert">
+                    {emailInlineError}
+                  </Text>
+                ) : null}
                 {err ? (
                   <Text style={[styles.err, t(styles.err), isArabic && styles.rtl]}>{err}</Text>
                 ) : null}
@@ -132,11 +149,13 @@ export function ForgotPasswordScreen({ navigation }: Props) {
                   style={[appButton.primary, (!canSubmit || busy) && appButton.disabled, { marginTop: 12 }]}
                   disabled={!canSubmit || busy}
                   onPress={() => {
-                    const e = email.trim()
-                    if (e.length < 5) {
-                      setErr(copy.needEmail)
+                    setEmailTouched(true)
+                    const fieldErr = emailFieldError(email)
+                    if (fieldErr) {
+                      setErr(fieldErr === 'Email is required.' ? copy.emailRequired : copy.invalidEmail)
                       return
                     }
+                    const e = email.trim()
                     setErr('')
                     setBusy(true)
                     void (async () => {
@@ -176,7 +195,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f2eff9' },
+  safe: { flex: 1, backgroundColor: '#eff6ff' },
   safeHc: { backgroundColor: '#ffffff' },
   keyboardAvoider: { flex: 1 },
   wrap: { flexGrow: 1, padding: 18, paddingBottom: 28, gap: 14 },
@@ -184,28 +203,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: '#dfd6ee',
+    borderColor: '#cbd5e1',
     padding: 18,
     gap: 10,
   },
   cardHc: { borderColor: '#0f172a', borderWidth: 2 },
-  title: { color: '#17131f', fontSize: 22, fontWeight: '900', letterSpacing: -0.3 },
-  lead: { color: '#534c62', fontSize: 14, lineHeight: 21, fontWeight: '600' },
-  label: { color: '#534c62', fontWeight: '800', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.6 },
+  title: { color: '#0f172a', fontSize: 22, fontWeight: '900', letterSpacing: -0.3 },
+  lead: { color: '#475569', fontSize: 14, lineHeight: 21, fontWeight: '600' },
+  label: { color: '#475569', fontWeight: '800', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.6 },
   input: {
     borderWidth: 1,
-    borderColor: '#dfd6ee',
+    borderColor: '#cbd5e1',
     borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#17131f',
-    backgroundColor: '#fdfcff',
+    color: '#0f172a',
+    backgroundColor: '#ffffff',
   },
   rtl: { writingDirection: 'rtl', textAlign: 'right' },
   rtlInput: { textAlign: 'right', writingDirection: 'rtl' },
+  fieldErr: { color: '#b91c1c', fontWeight: '600', fontSize: 13, marginTop: 6, lineHeight: 18 },
   err: { color: '#b91c1c', fontWeight: '700', fontSize: 14 },
-  doneMsg: { color: '#17131f', fontSize: 15, lineHeight: 22, fontWeight: '600' },
+  doneMsg: { color: '#0f172a', fontSize: 15, lineHeight: 22, fontWeight: '600' },
   devBox: {
     marginTop: 8,
     padding: 12,
@@ -217,6 +237,6 @@ const styles = StyleSheet.create({
   devTitle: { color: '#92400e', fontSize: 13, fontWeight: '800', lineHeight: 19 },
   devToken: { marginTop: 8, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 12, color: '#1c1917' },
   backLink: { marginTop: 8, paddingVertical: 6 },
-  backLinkText: { color: '#6d46d4', fontWeight: '800', fontSize: 15 },
-  hint: { color: '#6d6485', fontSize: 12, lineHeight: 18, fontWeight: '600' },
+  backLinkText: { color: '#1d4ed8', fontWeight: '800', fontSize: 15 },
+  hint: { color: '#64748b', fontSize: 12, lineHeight: 18, fontWeight: '600' },
 })

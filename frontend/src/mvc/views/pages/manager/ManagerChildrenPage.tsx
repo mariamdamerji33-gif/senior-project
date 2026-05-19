@@ -12,6 +12,8 @@ import { useConfirmDialog } from '@/mvc/views/components/ui/useConfirmDialog'
 import { TableRowActionsMenu } from '@/mvc/views/components/ui/TableRowActionsMenu'
 import { RowEditPopover } from '@/mvc/views/components/ui/RowEditPopover'
 import { ManagerChildAssignForm } from '@/mvc/views/components/manager/ManagerChildAssignForm'
+import { FieldError } from '@/mvc/views/components/ui/forms/FieldError'
+import { childAgeFieldError, childNameFieldError } from '@/utils/fieldValidation'
 
 type ChildRow = {
   id: string
@@ -69,6 +71,7 @@ export function ManagerChildrenPage() {
   const [parentId, setParentId] = useState('')
   const [therapistId, setTherapistId] = useState('')
   const [creating, setCreating] = useState(false)
+  const [createFormTouched, setCreateFormTouched] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [rowError, setRowError] = useState<string | null>(null)
@@ -173,13 +176,13 @@ export function ManagerChildrenPage() {
     if (!therapistId && therapists.length > 0) setTherapistId(therapists[0].id)
   }, [therapists, therapistId])
 
-  const canCreate =
-    !!token &&
-    name.trim().length >= 2 &&
-    age.trim().length > 0 &&
-    !!parentId &&
-    !!therapistId &&
-    !creating
+  const canCreate = useMemo(() => {
+    if (!token || creating) return false
+    if (childNameFieldError(name)) return false
+    if (childAgeFieldError(age)) return false
+    if (!parentId || !therapistId) return false
+    return true
+  }, [token, creating, name, age, parentId, therapistId])
 
   return (
     <div className="ui-page">
@@ -197,12 +200,25 @@ export function ManagerChildrenPage() {
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <label style={{ minWidth: 220, flex: '1 1 220px', display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontWeight: 700 }}>Student name</span>
-            <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Ali" />
+            <TextInput
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => setCreateFormTouched(true)}
+              placeholder="e.g., Ali"
+            />
+            <FieldError message={childNameFieldError(name)} show={createFormTouched} />
           </label>
 
           <label style={{ minWidth: 140, flex: '0 0 140px', display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontWeight: 700 }}>Age</span>
-            <TextInput value={age} onChange={(e) => setAge(e.target.value)} placeholder="7" />
+            <TextInput
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              onBlur={() => setCreateFormTouched(true)}
+              placeholder="7"
+              inputMode="numeric"
+            />
+            <FieldError message={childAgeFieldError(age)} show={createFormTouched} />
           </label>
 
           <label style={{ minWidth: 240, flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -236,10 +252,22 @@ export function ManagerChildrenPage() {
         <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <Button
             type="button"
+            title={
+              childNameFieldError(name) ||
+              childAgeFieldError(age) ||
+              (!parentId || !therapistId ? 'Select family and teacher' : undefined)
+            }
             disabled={!canCreate}
             variant={canCreate ? 'primary' : 'ghost'}
             onClick={() => {
               if (!token || !canCreate) return
+              setCreateFormTouched(true)
+              const nameErr = childNameFieldError(name)
+              const ageErr = childAgeFieldError(age)
+              if (nameErr || ageErr) {
+                setCreateError(nameErr || ageErr)
+                return
+              }
               setCreateError(null)
               setCreating(true)
               void (async () => {

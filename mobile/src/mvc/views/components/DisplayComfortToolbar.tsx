@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native'
-import { useDisplayComfort } from '../../controllers/DisplayComfortController'
+import { useDisplayComfort } from '../../controllers/DisplayComfortContextController'
 import { useLanguage } from '../../controllers/LanguageController'
+import { colors } from '../../../theme/colors'
 import { scaleTextStyle } from '../../../utils/scaleTextStyle'
 
 type Variant = 'surface' | 'drawer'
@@ -79,11 +80,11 @@ const surfaceStyles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(229,220,251,0.95)',
-    backgroundColor: 'rgba(255,255,255,0.88)',
+    borderColor: colors.outlineBorder,
+    backgroundColor: 'rgba(255,255,255,0.92)',
   },
   label: {
-    color: '#534c62',
+    color: colors.text,
     fontWeight: '800',
     fontSize: 11,
     letterSpacing: 0.5,
@@ -99,15 +100,15 @@ const surfaceStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#dfd6ee',
-    backgroundColor: '#fdfcff',
+    borderColor: colors.secondaryBorder,
+    backgroundColor: colors.surface,
   },
   btnPressed: { opacity: 0.85 },
   btnOn: {
-    borderColor: '#0f172a',
-    backgroundColor: '#e2e8f0',
+    borderColor: colors.primaryDeep,
+    backgroundColor: colors.secondarySurface,
   },
-  btnText: { color: '#17131f', fontWeight: '900', fontSize: 15 },
+  btnText: { color: colors.textTitle, fontWeight: '900', fontSize: 15 },
 })
 
 const drawerStyles = StyleSheet.create({
@@ -123,7 +124,7 @@ const drawerStyles = StyleSheet.create({
     alignItems: 'stretch',
   },
   label: {
-    color: '#e9e0ff',
+    color: colors.onDarkMuted,
     fontWeight: '800',
     fontSize: 8,
     letterSpacing: 0.35,
@@ -144,9 +145,9 @@ const drawerStyles = StyleSheet.create({
   },
   btnPressed: { opacity: 0.88 },
   btnOn: {
-    borderColor: '#f8fafc',
+    borderColor: colors.surfaceSoft,
     backgroundColor: 'rgba(255,255,255,0.92)',
   },
-  btnText: { color: '#fff', fontWeight: '900', fontSize: 15 },
-  btnTextOnContrast: { color: '#0f172a' },
+  btnText: { color: colors.onDark, fontWeight: '900', fontSize: 15 },
+  btnTextOnContrast: { color: colors.textTitle },
 })

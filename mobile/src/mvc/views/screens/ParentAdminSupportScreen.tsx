@@ -120,7 +120,7 @@ export function ParentAdminSupportScreen({ route, navigation }: Props) {
           value={subject}
           onChangeText={setSubject}
           placeholder={copy.subjectPlaceholder}
-          placeholderTextColor="#9c94b0"
+          placeholderTextColor="#94a3b8"
           textAlign={isArabic ? 'right' : 'left'}
         />
         <View style={[styles.switchRow, isArabic && styles.switchRowRtl]}>
@@ -132,7 +132,7 @@ export function ParentAdminSupportScreen({ route, navigation }: Props) {
           value={message}
           onChangeText={setMessage}
           placeholder={copy.messagePlaceholder}
-          placeholderTextColor="#9c94b0"
+          placeholderTextColor="#94a3b8"
           multiline
           textAlign={isArabic ? 'right' : 'left'}
         />
@@ -146,23 +146,23 @@ export function ParentAdminSupportScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  cardHeading: { color: '#17131f', fontWeight: '900', fontSize: 16, marginBottom: 4 },
-  line: { color: '#534c62', lineHeight: 21, fontWeight: '600' },
-  lineMuted: { color: '#7c7392', lineHeight: 20, fontSize: 12, marginTop: 4 },
+  cardHeading: { color: '#0f172a', fontWeight: '900', fontSize: 16, marginBottom: 4 },
+  line: { color: '#475569', lineHeight: 21, fontWeight: '600' },
+  lineMuted: { color: '#64748b', lineHeight: 20, fontSize: 12, marginTop: 4 },
   rtl: { textAlign: 'right', writingDirection: 'rtl' },
   input: {
     borderWidth: 1,
-    borderColor: '#cfc4e6',
+    borderColor: '#cbd5e1',
     borderRadius: 12,
-    backgroundColor: '#faf8ff',
+    backgroundColor: '#f8fafc',
     padding: 14,
-    color: '#17131f',
+    color: '#0f172a',
     fontWeight: '600',
   },
   messageInput: { minHeight: 110, textAlignVertical: 'top' },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 4 },
   switchRowRtl: { flexDirection: 'row-reverse' },
-  switchLabel: { flex: 1, color: '#534c62', fontWeight: '600', fontSize: 14 },
+  switchLabel: { flex: 1, color: '#475569', fontWeight: '600', fontSize: 14 },
   secondaryBtnText: { textAlign: 'center' },
   sendText: { textAlign: 'center' },
 })

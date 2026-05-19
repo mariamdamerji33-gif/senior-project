@@ -3,10 +3,12 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/mvc/controllers'
 import { isFamilyWebUser } from '@/utils/familyWebAccess'
 import { AuthLayout } from '@/mvc/views/components/auth/AuthLayout'
-import { RegistrationNotifyBanner } from '@/mvc/views/components/RegistrationNotifyBanner'
 import { Button } from '@/mvc/views/components/ui/Button'
+import { PasswordInput } from '@/mvc/views/components/ui/forms/PasswordInput'
+import { EmailFieldError } from '@/mvc/views/components/ui/forms/EmailFieldError'
 import { TextInput } from '@/mvc/views/components/ui/forms/TextInput'
 import { useToast } from '@/mvc/views/components/useToast'
+import { emailFieldError, isValidEmail } from '@/utils/fieldValidation'
 
 export function LoginPage() {
   const { login, user, token, logout, loading } = useAuth()
@@ -16,9 +18,10 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [emailTouched, setEmailTouched] = useState(false)
 
   const canSubmit = useMemo(
-    () => email.trim().length > 3 && password.trim().length > 0 && !submitting,
+    () => isValidEmail(email) && password.trim().length > 0 && !submitting,
     [email, password, submitting],
   )
 
@@ -41,13 +44,18 @@ export function LoginPage() {
 
   return (
     <AuthLayout>
-      <RegistrationNotifyBanner />
       <h2 className="auth-stepTitle">Sign in</h2>
 
       <form
         className="auth-form login-form"
         onSubmit={(e) => {
           e.preventDefault()
+          setEmailTouched(true)
+          const emailErr = emailFieldError(email)
+          if (emailErr || !password.trim()) {
+            if (emailErr) setError(emailErr)
+            return
+          }
           if (!canSubmit) return
           setError(null)
           const startedAt = Date.now()
@@ -72,18 +80,19 @@ export function LoginPage() {
           <TextInput
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onBlur={() => setEmailTouched(true)}
             type="email"
             placeholder="you@example.com"
             autoComplete="email"
             required
           />
+          <EmailFieldError value={email} show={emailTouched} />
         </label>
         <label className="login-field">
           <span className="login-label">Password</span>
-          <TextInput
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            type="password"
             placeholder="Your password"
             autoComplete="current-password"
             required

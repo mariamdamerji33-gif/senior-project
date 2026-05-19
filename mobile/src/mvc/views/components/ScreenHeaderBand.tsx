@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: 'rgba(124,77,255,0.38)',
+    backgroundColor: 'rgba(37, 99, 235, 0.32)',
     top: -72,
     right: -48,
   },

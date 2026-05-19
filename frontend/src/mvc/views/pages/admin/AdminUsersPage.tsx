@@ -1,15 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { api } from '@/mvc/models/apiClient'
 import { useAuth } from '@/mvc/controllers'
 import { ROLE_OPTIONS, formatRoleLabel } from '@/utils/roleLabels'
 import { Card } from '@/mvc/views/components/ui/Card'
 import { Button } from '@/mvc/views/components/ui/Button'
 import { Select } from '@/mvc/views/components/ui/forms/Select'
+import { PasswordInput } from '@/mvc/views/components/ui/forms/PasswordInput'
+import { EmailFieldError } from '@/mvc/views/components/ui/forms/EmailFieldError'
 import { TextInput } from '@/mvc/views/components/ui/forms/TextInput'
 import { useConfirmDialog } from '@/mvc/views/components/ui/useConfirmDialog'
 import { TableRowActionsMenu } from '@/mvc/views/components/ui/TableRowActionsMenu'
 import { RowEditPopover } from '@/mvc/views/components/ui/RowEditPopover'
 import { AdminUserEditForm } from '@/mvc/views/components/admin/AdminUserEditForm'
+import {
+  emailFieldError,
+  optionalPasswordFieldError,
+  passwordFieldError,
+} from '@/utils/fieldValidation'
+import { REGISTER_PASSWORD_HINT } from '@/utils/passwordRules'
 
 type AdminUser = {
   id: string
@@ -57,6 +65,8 @@ export function AdminUsersPage() {
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
+  const [createEmailTouched, setCreateEmailTouched] = useState(false)
+  const [editEmailTouched, setEditEmailTouched] = useState(false)
 
   async function refresh(ensureUser?: AdminUser | null) {
     if (!token) return
@@ -103,16 +113,37 @@ export function AdminUsersPage() {
     setEditRole((u.role as RoleOpt) || 'manager')
     setEditPassword('')
     setEditError(null)
+    setEditEmailTouched(false)
   }
 
   function closeEdit() {
     setEditing(null)
     setEditPassword('')
     setEditError(null)
+    setEditEmailTouched(false)
   }
+
+  const canCreateUser = useMemo(() => {
+    if (!token || creating) return false
+    return !emailFieldError(email) && !passwordFieldError(password)
+  }, [token, creating, email, password])
+
+  const canSaveEdit = useMemo(() => {
+    if (!token || !editing?.id) return false
+    if (emailFieldError(editEmail)) return false
+    if (optionalPasswordFieldError(editPassword)) return false
+    return true
+  }, [token, editing?.id, editEmail, editPassword])
 
   function saveEdit() {
     if (!token || !editing?.id) return
+    setEditEmailTouched(true)
+    const emailErr = emailFieldError(editEmail)
+    const pwErr = optionalPasswordFieldError(editPassword)
+    if (emailErr || pwErr) {
+      setEditError(emailErr || pwErr)
+      return
+    }
     setEditSaving(true)
     setEditError(null)
     void (async () => {
@@ -127,9 +158,13 @@ export function AdminUsersPage() {
           email: editEmail.trim().toLowerCase(),
           role: editRole,
         }
-        if (editPassword.trim().length >= 3) payload.password = editPassword.trim()
-        await api.adminUpdateUser(token, editing.id, payload)
+        const pw = editPassword.trim()
+        if (pw) payload.password = pw
+        const out = await api.adminUpdateUser(token, editing.id, payload)
         await refresh()
+        if (pw && out && typeof out === 'object' && 'emailNotice' in out && typeof out.emailNotice === 'string') {
+          setCreateSuccess(out.emailNotice)
+        }
         closeEdit()
       } catch (e: unknown) {
         setEditError(e instanceof Error ? e.message : 'Update failed')
@@ -158,11 +193,24 @@ export function AdminUsersPage() {
           </label>
           <label className="ui-field">
             <span className="ui-fieldLabel">Email</span>
-            <TextInput value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@example.com" />
+            <TextInput
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => setCreateEmailTouched(true)}
+              type="email"
+              autoComplete="email"
+              placeholder="user@example.com"
+            />
+            <EmailFieldError value={email} show={createEmailTouched} />
           </label>
           <label className="ui-field">
             <span className="ui-fieldLabel">Password</span>
-            <TextInput value={password} onChange={(e) => setPassword(e.target.value)} type="password" />
+            <PasswordInput
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="8+ characters, letter and number"
+            />
+            <span className="ui-helpText">{REGISTER_PASSWORD_HINT}</span>
           </label>
           <label className="ui-field">
             <span className="ui-fieldLabel">Role</span>
@@ -180,16 +228,21 @@ export function AdminUsersPage() {
           <Button
             type="button"
             title={
-              email.trim().length < 5
-                ? 'Enter an email with at least 5 characters'
-                : password.trim().length < 3
-                  ? 'Password must be at least 3 characters'
-                  : undefined
+              emailFieldError(email) ||
+              passwordFieldError(password) ||
+              undefined
             }
-            disabled={!token || creating || email.trim().length < 5 || password.trim().length < 3}
-            variant={email.trim().length < 5 || password.trim().length < 3 ? 'ghost' : 'primary'}
+            disabled={!canCreateUser}
+            variant={canCreateUser ? 'primary' : 'ghost'}
             onClick={() => {
-              if (!token) return
+              if (!token || !canCreateUser) return
+              setCreateEmailTouched(true)
+              const emailErr = emailFieldError(email)
+              const pwErr = passwordFieldError(password)
+              if (emailErr || pwErr) {
+                setCreateError(emailErr || pwErr)
+                return
+              }
               setCreateError(null)
               setCreateSuccess(null)
               setCreating(true)
@@ -207,7 +260,15 @@ export function AdminUsersPage() {
                   setCreateSuccess('User created. Refreshing listâ€¦')
                   const createdRow = out?.user as AdminUser | undefined
                   await refresh(createdRow ?? null)
-                  setCreateSuccess('User added â€” they appear in the table below.')
+                  const emailNote =
+                    out && typeof out === 'object' && 'emailNotice' in out && typeof out.emailNotice === 'string'
+                      ? out.emailNotice
+                      : null
+                  setCreateSuccess(
+                    emailNote
+                      ? `User added. ${emailNote}`
+                      : 'User added — they appear in the table below.',
+                  )
                 } catch (err: unknown) {
                   setCreateError(err instanceof Error ? err.message : 'Failed to create user')
                 } finally {
@@ -309,9 +370,11 @@ export function AdminUsersPage() {
           editPassword={editPassword}
           editError={editError}
           editSaving={editSaving}
-          canSave={!!token && editEmail.trim().length >= 3}
+          canSave={canSaveEdit}
           onNameChange={setEditName}
           onEmailChange={setEditEmail}
+          editEmailTouched={editEmailTouched}
+          onEditEmailBlur={() => setEditEmailTouched(true)}
           onRoleChange={setEditRole}
           onPasswordChange={setEditPassword}
           onSave={saveEdit}

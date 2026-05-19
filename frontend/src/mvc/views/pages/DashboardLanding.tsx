@@ -2,46 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/mvc/controllers'
 import { api } from '@/mvc/models/apiClient'
-import { Card } from '@/mvc/views/components/ui/Card'
-
-type StatTone = 'blue' | 'teal' | 'purple' | 'gold' | 'rose'
-
-function StatCard({
-  label,
-  value,
-  hint,
-  tone = 'blue',
-  to,
-}: {
-  label: string
-  value: string | number
-  hint?: string
-  tone?: StatTone
-  to?: string
-}) {
-  const body = (
-    <>
-      <div className="ui-statCard-icon" aria-hidden>
-        {tone === 'teal' ? '✓' : tone === 'blue' ? '↗' : tone === 'gold' ? '★' : tone === 'rose' ? '!' : '●'}
-      </div>
-      <div>
-        <div className="ui-statCard-label">{label}</div>
-        <div className="ui-statCard-value">{value}</div>
-        {hint ? <div className="ui-statCard-hint">{hint}</div> : null}
-      </div>
-    </>
-  )
-
-  if (to) {
-    return (
-      <Link to={to} className="ui-statCardLink">
-        <Card className={`ui-cardSoft ui-statCardPro ui-statCardPro--${tone}`}>{body}</Card>
-      </Link>
-    )
-  }
-
-  return <Card className={`ui-cardSoft ui-statCardPro ui-statCardPro--${tone}`}>{body}</Card>
-}
+import { StatCard } from '@/mvc/views/components/ui/StatCard'
 
 function ActionCard({
   step,
@@ -102,7 +63,7 @@ export function DashboardLanding() {
     role === 'super_admin'
       ? [
           { step: '1', title: 'Check analytics', text: 'See the full school numbers.', to: '/dashboard/analytics' },
-          { step: '2', title: 'Review requests', text: 'Approve or reject new admin requests.', to: '/dashboard/admin-registration-requests' },
+          { step: '2', title: 'Review requests', text: 'Approve or reject Teacher, Coordinator, and School Admin sign-ups.', to: '/dashboard/admin-registration-requests' },
           { step: '3', title: 'Open support inbox', text: 'Handle urgent mobile family messages.', to: '/dashboard/support-inbox' },
         ]
       : role === 'manager'

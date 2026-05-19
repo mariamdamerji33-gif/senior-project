@@ -7,6 +7,8 @@ import { TableRowActionsMenu } from '@/mvc/views/components/ui/TableRowActionsMe
 import { useConfirmDialog } from '@/mvc/views/components/ui/useConfirmDialog'
 import { Select } from '@/mvc/views/components/ui/forms/Select'
 import { TeacherNoChildrenHint } from '@/mvc/views/components/TeacherNoChildrenHint'
+import { FieldError } from '@/mvc/views/components/ui/forms/FieldError'
+import { datetimeLocalFieldError } from '@/utils/fieldValidation'
 
 type Child = { id: string; name: string; age: number }
 type SessionRow = { id: string; childId: string; therapistId: string; date: string; status: string }
@@ -77,8 +79,14 @@ export function TeacherSessionsPage() {
 
   const childNameById = useMemo(() => new Map(children.map((c) => [c.id, c.name])), [children])
 
+  const [whenTouched, setWhenTouched] = useState(false)
+
   const canCreate =
-    !!token && !!childId && whenLocal.trim().length > 0 && children.length > 0 && !saving
+    !!token &&
+    !!childId &&
+    !datetimeLocalFieldError(whenLocal) &&
+    children.length > 0 &&
+    !saving
 
   return (
     <div className="ui-page">
@@ -108,6 +116,7 @@ export function TeacherSessionsPage() {
                   type="datetime-local"
                   value={whenLocal}
                   onChange={(e) => setWhenLocal(e.target.value)}
+                  onBlur={() => setWhenTouched(true)}
                   style={{
                     padding: '10px 12px',
                     borderRadius: 10,
@@ -117,6 +126,7 @@ export function TeacherSessionsPage() {
                     font: 'inherit',
                   }}
                 />
+                <FieldError message={datetimeLocalFieldError(whenLocal)} show={whenTouched} />
               </label>
               <label style={{ minWidth: 180, flex: '0 1 180px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <span style={{ fontWeight: 700 }}>Status</span>
@@ -133,6 +143,12 @@ export function TeacherSessionsPage() {
                 disabled={!canCreate}
                 onClick={() => {
                   if (!token || !canCreate) return
+                  setWhenTouched(true)
+                  const whenErr = datetimeLocalFieldError(whenLocal)
+                  if (whenErr) {
+                    setCreateError(whenErr)
+                    return
+                  }
                   const dateIso = toIsoFromLocalInput(whenLocal)
                   if (!dateIso) {
                     setCreateError('Pick a valid date and time')

@@ -72,4 +72,47 @@ describe('HTTP API', () => {
       assert.ok(typeof res.body.status === 'string');
     },
   );
+
+  test(
+    'POST /api/auth/register keeps website staff roles pending approval',
+    { skip: !serviceRoleConfigured ? 'Supabase not configured (CI has no backend/.env)' : false },
+    async () => {
+    const email = `staff-pending-${Date.now()}@example.com`;
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({
+        name: 'Pending Teacher',
+        email,
+        password: 'Teacher123',
+        requestedRole: 'therapist',
+      })
+      .expect('Content-Type', /json/)
+      .expect(201);
+    assert.equal(res.body.ok, true);
+    assert.equal(res.body.immediate, false);
+    assert.ok(String(res.body.message || '').toLowerCase().includes('pending'));
+    },
+  );
+
+  test(
+    'POST /api/auth/register keeps mobile parent sign-up pending approval',
+    { skip: !serviceRoleConfigured ? 'Supabase not configured (CI has no backend/.env)' : false },
+    async () => {
+      const email = `parent-pending-${Date.now()}@example.com`;
+      const res = await request(app)
+        .post('/api/auth/register')
+        .set('X-ASP-Client', 'mobile')
+        .send({
+          name: 'Pending Parent',
+          email,
+          password: 'Parent123',
+          requestedRole: 'parent',
+        })
+        .expect('Content-Type', /json/)
+        .expect(201);
+      assert.equal(res.body.ok, true);
+      assert.equal(res.body.immediate, false);
+      assert.ok(String(res.body.message || '').toLowerCase().includes('pending'));
+    },
+  );
 });

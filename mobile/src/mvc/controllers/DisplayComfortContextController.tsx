@@ -25,10 +25,12 @@ const TEXT_SCALE: Record<DisplayFontTier, number> = {
 }
 
 const HIGH_CONTRAST_COLORS: AppThemeColors = {
+  ...baseColors,
   primary: '#1e40af',
+  primaryBright: '#1d4ed8',
   primaryDark: '#1e3a8a',
   primaryDeep: '#0f172a',
-  calm: '#0f766e',
+  calm: '#0284c7',
   secondarySurface: '#f1f5f9',
   secondaryBorder: '#64748b',
   outlineBorder: '#334155',
@@ -38,7 +40,21 @@ const HIGH_CONTRAST_COLORS: AppThemeColors = {
   text: '#0a0a0a',
   textMuted: '#334155',
   textTitle: '#000000',
+  onDark: '#ffffff',
+  onDarkMuted: '#e2e8f0',
+  onDarkEyebrow: '#cbd5e1',
+  onDarkSubtitle: '#f1f5f9',
+  inputPlaceholder: '#475569',
   danger: '#991b1b',
+  dangerSoft: '#fef2f2',
+  dangerBorder: '#fca5a5',
+  success: '#14532d',
+  successSoft: '#f0fdf4',
+  successBorder: '#86efac',
+  warning: '#78350f',
+  warningSoft: '#fffbeb',
+  warningBorder: '#fcd34d',
+  warningAccent: '#b45309',
 }
 
 function defaultPrefs(): DisplayComfortPrefs {

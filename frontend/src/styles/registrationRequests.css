@@ -1,0 +1,311 @@
+/* Registration requests — School Admin review queue */
+
+.regReq-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.regReq-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 720px) {
+  .regReq-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.regReq-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border);
+  background: var(--surface-muted);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.regReq-tab:hover {
+  border-color: var(--accent-border);
+  background: #fff;
+}
+
+.regReq-tab--active {
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.regReq-tab--pending.regReq-tab--active {
+  border-color: color-mix(in srgb, var(--accent) 70%, #f59e0b);
+  background: color-mix(in srgb, #fef3c7 35%, #fff);
+}
+
+.regReq-tab--approved.regReq-tab--active {
+  border-color: color-mix(in srgb, var(--accent) 40%, #16a34a);
+  background: color-mix(in srgb, #dcfce7 40%, #fff);
+}
+
+.regReq-tab--rejected.regReq-tab--active {
+  border-color: var(--danger-border);
+  background: color-mix(in srgb, var(--danger-bg) 80%, #fff);
+}
+
+.regReq-tab--all.regReq-tab--active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 90%, #fff);
+}
+
+.regReq-tabLabel {
+  font-family: var(--heading);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-h);
+}
+
+.regReq-tabCount {
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text-h);
+}
+
+.regReq-tabHint {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  line-height: 1.35;
+}
+
+.regReq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.regReq-card {
+  display: grid;
+  grid-template-columns: 4px 1fr;
+  gap: 0;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #fff;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.regReq-cardStripe--pending {
+  background: linear-gradient(180deg, #f59e0b, #fbbf24);
+}
+
+.regReq-cardStripe--approved {
+  background: linear-gradient(180deg, #16a34a, #4ade80);
+}
+
+.regReq-cardStripe--rejected {
+  background: linear-gradient(180deg, var(--danger), #f87171);
+}
+
+.regReq-cardBody {
+  padding: 16px 18px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.regReq-cardHead {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.regReq-name {
+  font-family: var(--heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-h);
+  margin: 0 0 4px;
+}
+
+.regReq-email {
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  word-break: break-all;
+}
+
+.regReq-meta {
+  font-size: 0.86rem;
+  color: var(--text);
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+}
+
+.regReq-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.regReq-sourceBanner {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.regReq-sourceBanner--mobile {
+  background: color-mix(in srgb, #dbeafe 70%, #fff);
+  border: 1px solid #93c5fd;
+  color: #1e3a8a;
+}
+
+.regReq-sourceBanner--website {
+  background: color-mix(in srgb, #f3e8ff 55%, #fff);
+  border: 1px solid #c4b5fd;
+  color: #4c1d95;
+}
+
+.regReq-sourceBannerSub {
+  font-weight: 500;
+  opacity: 0.92;
+}
+
+.regReq-card--mobile {
+  border-color: color-mix(in srgb, #93c5fd 55%, var(--border));
+}
+
+.regReq-badge--source {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.78rem;
+}
+
+.regReq-badge--source-mobile {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+.regReq-badge--source-website {
+  background: #ede9fe;
+  color: #5b21b6;
+  border: 1px solid #c4b5fd;
+}
+
+.regReq-badge--pending {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.regReq-badge--approved {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.regReq-badge--rejected {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger-border);
+}
+
+.regReq-actions {
+  flex: 0 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.regReq-actionsNote {
+  font-size: 0.82rem;
+  color: var(--text-soft);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.regReq-actionsNote--approved {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, #dcfce7 50%, #fff);
+  border: 1px solid #86efac;
+  color: #166534;
+}
+
+.regReq-actionsNote--rejected {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--danger-bg) 70%, #fff);
+  border: 1px solid var(--danger-border);
+}
+
+.regReq-btnRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.regReq-empty {
+  text-align: center;
+  padding: 36px 24px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+  background: var(--surface-muted);
+}
+
+.regReq-emptyIcon {
+  font-size: 2rem;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.regReq-emptyTitle {
+  font-family: var(--heading);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-h);
+  margin: 0 0 8px;
+}
+
+.regReq-emptyText {
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  margin: 0 auto 16px;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+.regReq-emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.regReq-rejectBlock {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}

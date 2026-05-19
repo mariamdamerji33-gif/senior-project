@@ -34,7 +34,6 @@ import { NotFoundPage } from '@/mvc/views/pages/NotFoundPage'
 import { ForgotPasswordPage } from '@/mvc/views/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/mvc/views/pages/ResetPasswordPage'
 import { AccountProfilePage } from '@/mvc/views/pages/AccountProfilePage'
-import { SiteLaunchGate } from '@/mvc/views/components/SiteLaunchGate'
 const familyWebRedirect = <Navigate to="/family-app" replace />
 
 export default function App() {
@@ -43,7 +42,6 @@ export default function App() {
       <ToastProvider>
         <A11yUiPrefsProvider>
         <BrowserRouter>
-          <SiteLaunchGate>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -244,7 +242,6 @@ export default function App() {
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
-          </SiteLaunchGate>
         </BrowserRouter>
         </A11yUiPrefsProvider>
       </ToastProvider>

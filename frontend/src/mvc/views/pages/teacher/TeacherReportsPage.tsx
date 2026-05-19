@@ -6,6 +6,8 @@ import { useConfirmDialog } from '@/mvc/views/components/ui/useConfirmDialog'
 import { Select } from '@/mvc/views/components/ui/forms/Select'
 import { TextArea } from '@/mvc/views/components/ui/forms/TextArea'
 import { api } from '@/mvc/models/apiClient'
+import { FieldError } from '@/mvc/views/components/ui/forms/FieldError'
+import { reportNotesFieldError } from '@/utils/fieldValidation'
 import { useAuth } from '@/mvc/controllers'
 
 const reportCategories = [
@@ -110,7 +112,10 @@ export function TeacherReportsPage() {
   const [editScore, setEditScore] = useState(50)
   const [editSaving, setEditSaving] = useState(false)
 
-  const canSave = notes.trim().length >= 5 && !!token && !!childId && children.length > 0
+  const [notesTouched, setNotesTouched] = useState(false)
+
+  const canSave =
+    !reportNotesFieldError(notes) && !!token && !!childId && children.length > 0
 
   return (
     <div className="ui-page">
@@ -168,10 +173,12 @@ export function TeacherReportsPage() {
               <TextArea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
+                onBlur={() => setNotesTouched(true)}
                 placeholder="What improved? What still needs support?"
                 rows={4}
                 disabled={children.length === 0}
               />
+              <FieldError message={reportNotesFieldError(notes)} show={notesTouched} />
             </label>
 
             <label style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12, textAlign: 'left' }}>
@@ -193,6 +200,12 @@ export function TeacherReportsPage() {
               style={{ width: '100%' }}
               onClick={() => {
                 if (!token || !childId) return
+                setNotesTouched(true)
+                const nErr = reportNotesFieldError(notes)
+                if (nErr) {
+                  setError(nErr)
+                  return
+                }
                 void (async () => {
                   const payload = { childId, notes: notes.trim(), progressScore, category }
                   setSaving(true)

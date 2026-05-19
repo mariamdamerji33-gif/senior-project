@@ -10,6 +10,7 @@ router.get(
   '/registration-requests',
   requireAuth,
   requireRole(['super_admin']),
+  requireServiceRole,
   adminController.listRegistrationRequests,
 );
 router.post(
@@ -25,6 +26,13 @@ router.post(
   requireRole(['super_admin']),
   requireServiceRole,
   adminController.rejectRegistrationRequest,
+);
+router.post(
+  '/registration-requests/:id/reopen',
+  requireAuth,
+  requireRole(['super_admin']),
+  requireServiceRole,
+  adminController.reopenRegistrationRequest,
 );
 router.get(
   '/admin-users',

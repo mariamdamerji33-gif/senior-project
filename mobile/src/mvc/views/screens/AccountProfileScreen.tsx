@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -17,18 +16,10 @@ import { useLanguage } from '../../controllers/LanguageController'
 import { api } from '../../models/api'
 import type { AdminDrawerParamList } from '../../../navigation/parentDrawerTypes'
 import { normalizeBirthDateForApi } from '../../../utils/birthDateInput'
+import { ProfileAvatarImage } from '../components/ProfileAvatarImage'
+import { DisplayComfortToolbar } from '../components/DisplayComfortToolbar'
 
 const PHONE_INPUT_PLACEHOLDER = '961 xx/ xxx xxx'
-
-function initials(name: string | null | undefined) {
-  const parts = String(name || '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-  const s = parts.map((p) => p[0]).join('')
-  return (s || '?').toUpperCase().slice(0, 2)
-}
 
 /** Editable staff profile (school tools). Used in admin drawer and for teachers on the family app shell. */
 export function StaffAccountProfileBody({
@@ -81,8 +72,10 @@ export function StaffAccountProfileBody({
     logoutTitle: isEn ? 'Confirm logout' : 'تأكيد تسجيل الخروج',
     logoutBody: isEn ? 'Do you want to log out now?' : 'هل تريد تسجيل الخروج الآن؟',
     logoutConfirm: isEn ? 'Log out' : 'تسجيل الخروج',
-    logoutLink: isEn ? 'Log out' : 'تسجيل الخروج',
-    logoutHint: isEn ? 'End session on this device' : 'إنهاء الجلسة على هذا الجهاز',
+    displayTitle: isEn ? 'Text size & contrast' : 'حجم النص والتباين',
+    displayHint: isEn
+      ? 'Adjust how text and colors look. These settings apply across the app.'
+      : 'اضبط مظهر النص والألوان. تُطبَّق هذه الإعدادات على كل الشاشات.',
   }
 
   const pickImage = async () => {
@@ -129,14 +122,25 @@ export function StaffAccountProfileBody({
       ) : null}
 
       <ScreenCard>
+        <Text style={[styles.displaySectionTitle, isArabic && styles.rtl]}>{copy.displayTitle}</Text>
+        <Text style={[styles.displaySectionHint, isArabic && styles.rtl]}>{copy.displayHint}</Text>
+        <DisplayComfortToolbar variant="surface" />
+      </ScreenCard>
+
+      <ScreenCard>
         <View style={[styles.row, isArabic && styles.rowRtl]}>
-          <View style={styles.avatarWrap}>
-            {user?.profilePhotoUrl ? (
-              <Image source={{ uri: user.profilePhotoUrl }} style={styles.avatarImg} />
-            ) : (
-              <Text style={styles.avatarTxt}>{initials(user?.name)}</Text>
-            )}
-          </View>
+          <ProfileAvatarImage
+            photoUrl={user?.profilePhotoUrl}
+            photoStoragePath={user?.profilePhotoStoragePath}
+            name={user?.name}
+            size={72}
+            wrapStyle={styles.avatarWrap}
+            imageStyle={styles.avatarImg}
+            initialsStyle={styles.avatarTxt}
+            onPhotoLoadError={() => {
+              void refreshUser().catch(() => {})
+            }}
+          />
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[styles.name, isArabic && styles.rtl]}>{user?.name || user?.email || '—'}</Text>
             <Text style={[styles.meta, isArabic && styles.rtl]}>
@@ -217,7 +221,7 @@ export function StaffAccountProfileBody({
           </Pressable>
           <Pressable
             style={[styles.ghostBtn, busy && styles.btnMuted]}
-            disabled={busy || !token || !user?.profilePhotoUrl}
+            disabled={busy || !token || !(Boolean(user?.profilePhotoStoragePath?.trim()) || Boolean(user?.profilePhotoUrl?.trim()))}
             onPress={() => {
               if (!token || busy) return
               void (async () => {
@@ -261,9 +265,31 @@ export function StaffAccountProfileBody({
               </View>
               <Text style={styles.securityChevron}>{isArabic ? '‹' : '›'}</Text>
             </Pressable>
+            {showLogout ? (
+              <Pressable
+                style={[styles.logoutUnderSecurity, isArabic && styles.securityRowRtl]}
+                onPress={() => {
+                  void (async () => {
+                    const ok = await confirm({
+                      title: copy.logoutTitle,
+                      description: copy.logoutBody,
+                      confirmLabel: copy.logoutConfirm,
+                      cancelLabel: copy.cancel,
+                      tone: 'primary',
+                      rtl: !isEn,
+                    })
+                    if (!ok) return
+                    logout()
+                  })()
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={copy.logoutConfirm}
+              >
+                <Text style={[styles.logoutUnderSecurityText, isArabic && styles.rtl]}>{copy.logoutConfirm}</Text>
+              </Pressable>
+            ) : null}
           </>
-        ) : null}
-        {showLogout ? (
+        ) : showLogout ? (
           <>
             <View style={styles.profileDivider} />
             <Pressable
@@ -283,12 +309,9 @@ export function StaffAccountProfileBody({
                 })()
               }}
               accessibilityRole="button"
-              accessibilityLabel={copy.logoutLink}
+              accessibilityLabel={copy.logoutConfirm}
             >
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[styles.logoutRowTitle, isArabic && styles.rtl]}>{copy.logoutLink}</Text>
-                <Text style={[styles.logoutRowHint, isArabic && styles.rtl]}>{copy.logoutHint}</Text>
-              </View>
+              <Text style={[styles.logoutRowTitle, isArabic && styles.rtl]}>{copy.logoutConfirm}</Text>
             </Pressable>
           </>
         ) : null}
@@ -309,35 +332,37 @@ export function AdminAccountProfileScreen({ navigation }: AdminProps) {
 const styles = StyleSheet.create({
   rtl: { textAlign: 'right', writingDirection: 'rtl' },
   err: { color: '#b91c1c', fontWeight: '700' },
+  displaySectionTitle: { fontSize: 16, fontWeight: '800', color: '#0f172a', marginBottom: 6 },
+  displaySectionHint: { fontSize: 13, lineHeight: 19, fontWeight: '600', color: '#64748b', marginBottom: 12 },
   row: { flexDirection: 'row', gap: 14, alignItems: 'center', marginBottom: 14 },
   rowRtl: { flexDirection: 'row-reverse' },
   avatarWrap: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#f4f1fb',
+    backgroundColor: '#dbeafe',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   avatarImg: { width: 72, height: 72 },
-  avatarTxt: { fontSize: 22, fontWeight: '900', color: '#4c1d95' },
-  name: { fontSize: 17, fontWeight: '900', color: '#17131f' },
-  meta: { marginTop: 4, color: '#534c62', fontWeight: '600' },
+  avatarTxt: { fontSize: 22, fontWeight: '900', color: '#1e3a8a' },
+  name: { fontSize: 17, fontWeight: '900', color: '#0f172a' },
+  meta: { marginTop: 4, color: '#475569', fontWeight: '600' },
   label: { fontSize: 12, fontWeight: '800', color: '#6b5a8a', marginBottom: 6 },
   input: {
     borderWidth: 1,
-    borderColor: '#dfd6ee',
+    borderColor: '#cbd5e1',
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#faf8ff',
-    color: '#17131f',
+    backgroundColor: '#f8fafc',
+    color: '#0f172a',
     fontWeight: '600',
   },
   primaryBtn: {
     marginTop: 16,
-    backgroundColor: '#6d46d4',
+    backgroundColor: '#1d4ed8',
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
@@ -350,12 +375,12 @@ const styles = StyleSheet.create({
     minWidth: 120,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#cfc4e6',
+    borderColor: '#cbd5e1',
     paddingVertical: 12,
     alignItems: 'center',
-    backgroundColor: '#f4f1fb',
+    backgroundColor: '#dbeafe',
   },
-  ghostBtnText: { color: '#5a38b8', fontWeight: '800' },
+  ghostBtnText: { color: '#1e40af', fontWeight: '800' },
   profileDivider: {
     height: 1,
     backgroundColor: '#e8e0fb',
@@ -370,7 +395,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   securityRowRtl: { flexDirection: 'row-reverse' },
-  securityRowTitle: { fontSize: 16, fontWeight: '800', color: '#17131f' },
+  securityRowTitle: { fontSize: 16, fontWeight: '800', color: '#0f172a' },
   securityRowHint: { marginTop: 4, fontSize: 13, fontWeight: '600', color: '#6b5a8a' },
   securityChevron: { fontSize: 22, fontWeight: '300', color: '#8b7cb8' },
   logoutRow: {
@@ -380,5 +405,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   logoutRowTitle: { fontSize: 16, fontWeight: '800', color: '#b91c1c' },
-  logoutRowHint: { marginTop: 4, fontSize: 13, fontWeight: '600', color: '#9f1239' },
+  logoutUnderSecurity: {
+    marginTop: 10,
+    alignSelf: 'stretch',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: '#b91c1c',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutUnderSecurityText: { color: '#fff', fontWeight: '900', fontSize: 16 },
 })

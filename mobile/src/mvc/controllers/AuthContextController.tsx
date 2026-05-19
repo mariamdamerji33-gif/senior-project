@@ -42,6 +42,17 @@ function isJwtExpired(token: string) {
   return !expiresAt || Date.now() + TOKEN_EXPIRY_SKEW_MS >= expiresAt
 }
 
+/** `/api/auth/me` failed: only drop the session when the server rejected the token (401), not on network blips. */
+function shouldClearSessionAfterMeFailure(err: unknown): boolean {
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase()
+  return (
+    msg.includes('session expired') ||
+    msg.includes('sign in again') ||
+    msg.includes('invalid token') ||
+    msg.includes('missing token')
+  )
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [token, setToken] = useState<string | null>(null)
@@ -97,9 +108,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return
         setUser(res.user)
         await AsyncStorage.setItem(STORAGE_USER, JSON.stringify(res.user))
-      } catch {
+      } catch (e) {
         if (cancelled) return
-        await clearSession()
+        if (shouldClearSessionAfterMeFailure(e)) await clearSession()
+        /* else: keep user/token from storage so profile still works offline or when API is briefly unreachable */
       }
     })()
     return () => {
@@ -124,6 +136,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const lastBackgroundAt = lastBackgroundAtRef.current
         if (lastBackgroundAt && Date.now() - lastBackgroundAt > inactivityLogoutMs) {
           await clearSession()
+          return
+        }
+        try {
+          const res = await api.me(token)
+          setUser(res.user)
+          await AsyncStorage.setItem(STORAGE_USER, JSON.stringify(res.user))
+        } catch {
+          /* keep session; profile refresh is best-effort */
         }
       })()
     }

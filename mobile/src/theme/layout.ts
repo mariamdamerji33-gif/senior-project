@@ -34,21 +34,21 @@ export const screenLayout = StyleSheet.create({
     elevation: 5,
   },
   headerEyebrow: {
-    color: '#93c5fd',
+    color: colors.onDarkEyebrow,
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.9,
   },
   headerTitle: {
-    color: '#fff',
+    color: colors.onDark,
     fontSize: 28,
     fontWeight: '900',
     marginTop: 6,
     letterSpacing: -0.7,
   },
   headerSubtitle: {
-    color: '#e2e8f0',
+    color: colors.onDarkSubtitle,
     fontSize: 14,
     fontWeight: '700',
     marginTop: 8,
@@ -66,7 +66,7 @@ export const screenLayout = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.16)',
   },
-  backText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  backText: { color: colors.onDark, fontWeight: '800', fontSize: 15 },
   /** Pulls cards up slightly under the rounded header for a sheet look. */
   bodySheet: {
     marginTop: -18,

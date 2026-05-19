@@ -2,8 +2,11 @@ import { Button } from '@/mvc/views/components/ui/Button'
 
 type RoleOpt = 'super_admin' | 'manager' | 'therapist' | 'parent'
 import { Select } from '@/mvc/views/components/ui/forms/Select'
+import { PasswordInput } from '@/mvc/views/components/ui/forms/PasswordInput'
+import { EmailFieldError } from '@/mvc/views/components/ui/forms/EmailFieldError'
 import { TextInput } from '@/mvc/views/components/ui/forms/TextInput'
 import { ROLE_OPTIONS } from '@/utils/roleLabels'
+import { REGISTER_PASSWORD_HINT } from '@/utils/passwordRules'
 
 type Props = {
   editName: string
@@ -15,6 +18,8 @@ type Props = {
   canSave: boolean
   onNameChange: (v: string) => void
   onEmailChange: (v: string) => void
+  editEmailTouched: boolean
+  onEditEmailBlur: () => void
   onRoleChange: (v: RoleOpt) => void
   onPasswordChange: (v: string) => void
   onSave: () => void
@@ -31,6 +36,8 @@ export function AdminUserEditForm({
   canSave,
   onNameChange,
   onEmailChange,
+  editEmailTouched,
+  onEditEmailBlur,
   onRoleChange,
   onPasswordChange,
   onSave,
@@ -45,7 +52,14 @@ export function AdminUserEditForm({
         </label>
         <label className="ui-field">
           <span className="ui-fieldLabel">Email</span>
-          <TextInput value={editEmail} onChange={(e) => onEmailChange(e.target.value)} />
+          <TextInput
+            value={editEmail}
+            onChange={(e) => onEmailChange(e.target.value)}
+            onBlur={onEditEmailBlur}
+            type="email"
+            autoComplete="email"
+          />
+          <EmailFieldError value={editEmail} show={editEmailTouched} />
         </label>
         <label className="ui-field">
           <span className="ui-fieldLabel">Role</span>
@@ -59,12 +73,12 @@ export function AdminUserEditForm({
         </label>
         <label className="ui-field">
           <span className="ui-fieldLabel">New password</span>
-          <TextInput
+          <PasswordInput
             value={editPassword}
             onChange={(e) => onPasswordChange(e.target.value)}
-            type="password"
-            placeholder="Optional"
+            placeholder="Leave blank to keep current"
           />
+          <span className="ui-helpText">{REGISTER_PASSWORD_HINT}</span>
         </label>
       </div>
       {editError ? (

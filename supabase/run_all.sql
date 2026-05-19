@@ -155,6 +155,7 @@ create table if not exists public.registration_requests (
   email text not null,
   password_hash text not null,
   requested_role text not null,
+  registration_source text not null default 'website' check (registration_source in ('mobile', 'website')),
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
   reject_reason text null,
   created_at timestamptz not null default now(),

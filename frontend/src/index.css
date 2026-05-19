@@ -679,10 +679,22 @@ body:has(.auth-page)::before {
 }
 
 .auth-calloutText {
-  margin: 0 0 0.85rem;
+  margin: 0;
   font-size: 0.9rem;
   line-height: 1.5;
   color: var(--text);
+}
+
+.auth-calloutHint {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+
+.auth-callout--pending {
+  border-color: color-mix(in srgb, var(--accent-border) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent-soft) 80%, var(--surface));
 }
 
 .auth-flash {

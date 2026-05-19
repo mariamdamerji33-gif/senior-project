@@ -16,7 +16,7 @@ export type ParentActivitiesParamList = {
 export type ParentDrawerParamList = {
   MainOverview: undefined
   ParentAccountProfile: undefined
-  /** Plain-language explanation of the left purple menu (family accounts). */
+  /** Plain-language explanation of the left blue menu (family accounts). */
   ParentMenuHelp: undefined
   ParentDashboardSheet: { childId: string; childName?: string }
   ParentDailyCheckIn: { childId: string; childName?: string }

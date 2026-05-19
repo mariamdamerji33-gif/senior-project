@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '@/mvc/models/apiClient'
+import { FieldError } from '@/mvc/views/components/ui/forms/FieldError'
+import { parentStepBodyFieldError, planTitleFieldError } from '@/utils/fieldValidation'
 import { useAuth } from '@/mvc/controllers'
 import { Card } from '@/mvc/views/components/ui/Card'
 import { Button } from '@/mvc/views/components/ui/Button'
@@ -111,8 +113,14 @@ export function TeacherParentStepsPage() {
     [steps],
   )
 
+  const [formTouched, setFormTouched] = useState(false)
+
   const canPublish =
-    !!token && !!childId && !saving && title.trim().length >= 2 && body.trim().length >= 3
+    !!token &&
+    !!childId &&
+    !saving &&
+    !planTitleFieldError(title) &&
+    !parentStepBodyFieldError(body)
 
   return (
     <div className="ui-page">
@@ -177,8 +185,10 @@ export function TeacherParentStepsPage() {
                 <TextInput
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
+                  onBlur={() => setFormTouched(true)}
                   placeholder="e.g. Daily routine for transitions"
                 />
+                <FieldError message={planTitleFieldError(title)} show={formTouched} />
               </label>
               <label className="ui-progressForm__field ui-progressForm__field--narrow">
                 <span>Category</span>
@@ -194,9 +204,11 @@ export function TeacherParentStepsPage() {
               <TextArea
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
+                onBlur={() => setFormTouched(true)}
                 rows={3}
                 placeholder="Write clear steps the family can follow at home…"
               />
+              <FieldError message={parentStepBodyFieldError(body)} show={formTouched} />
             </label>
             <div style={{ marginTop: 12 }}>
               <Button
@@ -205,6 +217,13 @@ export function TeacherParentStepsPage() {
                 disabled={!canPublish}
                 onClick={() => {
                   if (!canPublish) return
+                  setFormTouched(true)
+                  const tErr = planTitleFieldError(title)
+                  const bErr = parentStepBodyFieldError(body)
+                  if (tErr || bErr) {
+                    setError(tErr || bErr)
+                    return
+                  }
                   setSaving(true)
                   setError(null)
                   void (async () => {

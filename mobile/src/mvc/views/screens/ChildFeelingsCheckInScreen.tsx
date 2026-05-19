@@ -109,7 +109,7 @@ export function ChildFeelingsCheckInScreen({ route, navigation }: Props) {
           value={note}
           onChangeText={setNote}
           placeholder={ui.notePlaceholder}
-          placeholderTextColor="#9c94b0"
+          placeholderTextColor="#94a3b8"
           multiline
           textAlign={isArabic ? 'right' : 'left'}
         />
@@ -133,8 +133,8 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: 'transparent' },
   wrap: { flex: 1, padding: 20, gap: 10 },
   rtl: { textAlign: 'right', writingDirection: 'rtl' },
-  subtitle: { color: '#534c62', fontWeight: '700' },
-  helper: { color: '#17131f', fontWeight: '600' },
+  subtitle: { color: '#475569', fontWeight: '700' },
+  helper: { color: '#0f172a', fontWeight: '600' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   feelingCard: {
     width: '31%',
@@ -142,34 +142,34 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#dfd6ee',
+    borderColor: '#cbd5e1',
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
   },
-  feelingCardActive: { borderColor: '#6d46d4', backgroundColor: '#f4f1fb' },
+  feelingCardActive: { borderColor: '#1d4ed8', backgroundColor: '#dbeafe' },
   emoji: { fontSize: 28 },
-  feelingLabel: { color: '#17131f', fontWeight: '700' },
-  tipCard: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#dfd6ee', padding: 12, gap: 6 },
-  tipTitle: { color: '#17131f', fontWeight: '700' },
-  tipText: { color: '#534c62', lineHeight: 20 },
+  feelingLabel: { color: '#0f172a', fontWeight: '700' },
+  tipCard: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#cbd5e1', padding: 12, gap: 6 },
+  tipTitle: { color: '#0f172a', fontWeight: '700' },
+  tipText: { color: '#475569', lineHeight: 20 },
   input: {
     minHeight: 44,
     maxHeight: 90,
     backgroundColor: '#fff',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#cfc4e6',
+    borderColor: '#cbd5e1',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#17131f',
+    color: '#0f172a',
   },
-  saveBtn: { backgroundColor: '#f4f1fb', borderRadius: 10, padding: 12, alignItems: 'center' },
+  saveBtn: { backgroundColor: '#dbeafe', borderRadius: 10, padding: 12, alignItems: 'center' },
   saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { color: '#5f3dc9', fontWeight: '700' },
-  inlineStatus: { color: '#17131f', textAlign: 'center' },
+  saveBtnText: { color: '#1e40af', fontWeight: '700' },
+  inlineStatus: { color: '#0f172a', textAlign: 'center' },
   inlineError: { color: '#b91c1c', textAlign: 'center' },
-  resetBtn: { backgroundColor: '#6d46d4', borderRadius: 10, padding: 12, alignItems: 'center' },
+  resetBtn: { backgroundColor: '#1d4ed8', borderRadius: 10, padding: 12, alignItems: 'center' },
   resetBtnText: { color: '#fff', fontWeight: '700' },
 })

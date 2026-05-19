@@ -1,5 +1,6 @@
 -- Pending account requests (public signup → School Admin approves in dashboard).
--- Run once in the Supabase SQL editor.
+-- Run once in the Supabase SQL editor (required for website Create account + Registration requests page).
+-- Backend must use SUPABASE_SERVICE_ROLE_KEY to read/write this table.
 
 create table if not exists registration_requests (
   id uuid primary key default gen_random_uuid(),
@@ -7,6 +8,7 @@ create table if not exists registration_requests (
   email text not null,
   password_hash text not null,
   requested_role text not null,
+  registration_source text not null default 'website' check (registration_source in ('mobile', 'website')),
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
   reject_reason text null,
   created_at timestamptz not null default now(),

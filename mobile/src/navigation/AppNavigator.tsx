@@ -5,7 +5,7 @@ import { HomeRouter } from './HomeRouter'
 import { useAuth } from '../mvc/controllers/AuthController'
 import { useDisplayComfort } from '../mvc/controllers/DisplayComfortController'
 import { BrandWallpaperDecor } from '../mvc/views/components/BrandWallpaperDecor'
-import { LoginScreen, ForgotPasswordScreen, ResetPasswordScreen } from '../mvc/views/screens'
+import { LoginScreen, RegisterScreen, ForgotPasswordScreen, ResetPasswordScreen } from '../mvc/views/screens'
 
 export type { AuthStackParamList, RootStackParamList } from './types'
 
@@ -31,12 +31,13 @@ export function AppNavigator() {
         initialRouteName={user ? 'Home' : 'Login'}
         screenOptions={{
           contentStyle: { backgroundColor: 'transparent' },
-          headerStyle: { backgroundColor: 'rgba(248, 245, 255, 0.94)' },
+          headerStyle: { backgroundColor: 'rgba(239, 246, 255, 0.94)' },
         }}
       >
         {!user ? (
           <>
             <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign in' }} />
+            <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create account' }} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: 'Forgot password' }} />
             <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ title: 'Reset password' }} />
           </>

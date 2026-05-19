@@ -17,7 +17,7 @@ const Stack = createNativeStackNavigator<ParentActivitiesParamList>()
 const activityHeader = {
   headerShown: true as const,
   headerShadowVisible: false,
-  headerStyle: { backgroundColor: 'rgba(248, 245, 255, 0.98)' },
+  headerStyle: { backgroundColor: 'rgba(239, 246, 255, 0.98)' },
   headerTitleStyle: { fontWeight: '800' as const, color: colors.textTitle, fontSize: 17 },
   headerTintColor: colors.primary,
   headerBackButtonDisplayMode: 'minimal' as const,

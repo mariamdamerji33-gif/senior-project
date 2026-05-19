@@ -3,10 +3,15 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '@/mvc/models/apiClient'
 import { AuthLayout } from '@/mvc/views/components/auth/AuthLayout'
 import { Button } from '@/mvc/views/components/ui/Button'
+import { PasswordInput } from '@/mvc/views/components/ui/forms/PasswordInput'
 import { TextInput } from '@/mvc/views/components/ui/forms/TextInput'
 import { useToast } from '@/mvc/views/components/useToast'
-import { meetsRegisterPasswordRules } from '@/utils/passwordRules'
-
+import { FieldError } from '@/mvc/views/components/ui/forms/FieldError'
+import {
+  REGISTER_PASSWORD_HINT,
+  confirmPasswordFieldError,
+  passwordFieldError,
+} from '@/utils/fieldValidation'
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -22,9 +27,15 @@ export function ResetPasswordPage() {
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [passwordTouched, setPasswordTouched] = useState(false)
+  const [confirmTouched, setConfirmTouched] = useState(false)
 
   const canSubmit = useMemo(
-    () => token.length > 0 && meetsRegisterPasswordRules(password) && password === confirm && !loading,
+    () =>
+      token.trim().length > 0 &&
+      !passwordFieldError(password) &&
+      !confirmPasswordFieldError(password, confirm) &&
+      !loading,
     [token, password, confirm, loading],
   )
 
@@ -41,13 +52,29 @@ export function ResetPasswordPage() {
           className="auth-form login-form"
           onSubmit={(e) => {
             e.preventDefault()
+            setPasswordTouched(true)
+            setConfirmTouched(true)
+            if (!token.trim()) {
+              setError('Reset token is required.')
+              return
+            }
+            const pwErr = passwordFieldError(password)
+            const matchErr = confirmPasswordFieldError(password, confirm)
+            if (pwErr || matchErr) {
+              setError(pwErr || matchErr)
+              return
+            }
             if (!canSubmit) return
             setError(null)
             setLoading(true)
             void (async () => {
               try {
                 const res = await api.resetPassword({ token, password })
-                toast(res.message || 'Password updated.', 'success')
+                const detail =
+                  res && typeof res === 'object' && 'emailNotice' in res && typeof res.emailNotice === 'string'
+                    ? res.emailNotice
+                    : null
+                toast(detail ? `${res.message || 'Password updated.'} ${detail}` : res.message || 'Password updated.', 'success')
                 navigate('/login', { replace: true })
               } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : 'Reset failed')
@@ -63,25 +90,28 @@ export function ResetPasswordPage() {
           </label>
           <label className="login-field">
             <span className="login-label">New password</span>
-            <TextInput
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              placeholder="••••••••"
+              onBlur={() => setPasswordTouched(true)}
+              placeholder="8+ characters, letter and number"
               autoComplete="new-password"
               required
             />
+            <FieldError message={passwordFieldError(password)} show={passwordTouched} />
+            <span className="ui-helpText">{REGISTER_PASSWORD_HINT}</span>
           </label>
           <label className="login-field">
             <span className="login-label">Confirm password</span>
-            <TextInput
+            <PasswordInput
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              type="password"
+              onBlur={() => setConfirmTouched(true)}
               placeholder="Repeat password"
               autoComplete="new-password"
               required
             />
+            <FieldError message={confirmPasswordFieldError(password, confirm)} show={confirmTouched} />
           </label>
           <Button type="submit" disabled={!canSubmit} variant={canSubmit ? 'primary' : 'ghost'} className="login-submit">
             {loading ? 'Saving…' : 'Update password'}
@@ -91,9 +121,6 @@ export function ResetPasswordPage() {
               Back to sign in
             </Link>
           </p>
-          {password && confirm && password !== confirm ? (
-            <div className="login-errorTitle">Passwords do not match.</div>
-          ) : null}
           {error ? (
             <div className="login-error" role="alert">
               <div className="login-errorTitle">{error}</div>
