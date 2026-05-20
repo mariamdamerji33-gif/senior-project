@@ -69,9 +69,12 @@ export function StaffAccountProfileBody({
     cancel: isEn ? 'Cancel' : 'إلغاء',
     securitySettings: isEn ? 'Security settings' : 'إعدادات الأمان',
     securitySettingsHint: isEn ? 'Auto-logout when the app is in the background' : 'تسجيل خروج تلقائي عند بقاء التطبيق بالخلفية',
-    logoutTitle: isEn ? 'Confirm logout' : 'تأكيد تسجيل الخروج',
-    logoutBody: isEn ? 'Do you want to log out now?' : 'هل تريد تسجيل الخروج الآن؟',
-    logoutConfirm: isEn ? 'Log out' : 'تسجيل الخروج',
+    logoutTitle: isEn ? 'Log out?' : 'تسجيل الخروج؟',
+    logoutBody: isEn
+      ? 'You will return to the sign-in screen. You can sign in again anytime.'
+      : 'ستعود إلى شاشة تسجيل الدخول. يمكنك تسجيل الدخول مرة أخرى في أي وقت.',
+    logoutButton: isEn ? 'Log out' : 'تسجيل الخروج',
+    logoutConfirm: isEn ? 'Yes, log out' : 'نعم، تسجيل الخروج',
     displayTitle: isEn ? 'Text size & contrast' : 'حجم النص والتباين',
     displayHint: isEn
       ? 'Adjust how text and colors look. These settings apply across the app.'
@@ -107,6 +110,7 @@ export function StaffAccountProfileBody({
   }
 
   return (
+    <>
     <ScreenScrollPage
       eyebrow={copy.eyebrow}
       title={copy.title}
@@ -275,7 +279,7 @@ export function StaffAccountProfileBody({
                       description: copy.logoutBody,
                       confirmLabel: copy.logoutConfirm,
                       cancelLabel: copy.cancel,
-                      tone: 'primary',
+                      tone: 'danger',
                       rtl: !isEn,
                     })
                     if (!ok) return
@@ -283,9 +287,9 @@ export function StaffAccountProfileBody({
                   })()
                 }}
                 accessibilityRole="button"
-                accessibilityLabel={copy.logoutConfirm}
+                accessibilityLabel={copy.logoutButton}
               >
-                <Text style={[styles.logoutUnderSecurityText, isArabic && styles.rtl]}>{copy.logoutConfirm}</Text>
+                <Text style={[styles.logoutUnderSecurityText, isArabic && styles.rtl]}>{copy.logoutButton}</Text>
               </Pressable>
             ) : null}
           </>
@@ -301,7 +305,7 @@ export function StaffAccountProfileBody({
                     description: copy.logoutBody,
                     confirmLabel: copy.logoutConfirm,
                     cancelLabel: copy.cancel,
-                    tone: 'primary',
+                    tone: 'danger',
                     rtl: !isEn,
                   })
                   if (!ok) return
@@ -309,15 +313,16 @@ export function StaffAccountProfileBody({
                 })()
               }}
               accessibilityRole="button"
-              accessibilityLabel={copy.logoutConfirm}
+              accessibilityLabel={copy.logoutButton}
             >
-              <Text style={[styles.logoutRowTitle, isArabic && styles.rtl]}>{copy.logoutConfirm}</Text>
+              <Text style={[styles.logoutRowTitle, isArabic && styles.rtl]}>{copy.logoutButton}</Text>
             </Pressable>
           </>
         ) : null}
       </ScreenCard>
-      {confirmDialog}
     </ScreenScrollPage>
+    {confirmDialog}
+    </>
   )
 }
 

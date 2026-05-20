@@ -55,7 +55,8 @@ export function AdminUsersPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState<RoleOpt>('manager')
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [role, setRole] = useState<RoleOpt | ''>('')
 
   const [editing, setEditing] = useState<AdminUser | null>(null)
   const [editName, setEditName] = useState('')
@@ -124,9 +125,19 @@ export function AdminUsersPage() {
   }
 
   const canCreateUser = useMemo(() => {
-    if (!token || creating) return false
+    if (!token || creating || !role) return false
     return !emailFieldError(email) && !passwordFieldError(password)
-  }, [token, creating, email, password])
+  }, [token, creating, email, password, role])
+
+  function closeCreateForm() {
+    setShowCreateForm(false)
+    setCreateError(null)
+    setCreateEmailTouched(false)
+    setName('')
+    setEmail('')
+    setPassword('')
+    setRole('')
+  }
 
   const canSaveEdit = useMemo(() => {
     if (!token || !editing?.id) return false
@@ -177,128 +188,159 @@ export function AdminUsersPage() {
   return (
     <div className="ui-page">
       <h2 className="ui-pageTitle">Admin Management</h2>
-      {loading ? <div style={{ opacity: 0.85 }}>Loadingâ€¦</div> : null}
+      {loading ? <div style={{ opacity: 0.85 }}>Loading…</div> : null}
       {error ? (
         <div className="ui-alert ui-alertError ui-textErrorStrong" role="alert">
           {error}
         </div>
       ) : null}
 
-      <Card className="ui-sectionCard" style={{ marginBottom: 12 }}>
-        <h3 className="ui-sectionTitle">Create user</h3>
-        <div className="ui-formGrid">
-          <label className="ui-field">
-            <span className="ui-fieldLabel">Name</span>
-            <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Optional" />
-          </label>
-          <label className="ui-field">
-            <span className="ui-fieldLabel">Email</span>
-            <TextInput
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={() => setCreateEmailTouched(true)}
-              type="email"
-              autoComplete="email"
-              placeholder="user@example.com"
-            />
-            <EmailFieldError value={email} show={createEmailTouched} />
-          </label>
-          <label className="ui-field">
-            <span className="ui-fieldLabel">Password</span>
-            <PasswordInput
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="8+ characters, letter and number"
-            />
-            <span className="ui-helpText">{REGISTER_PASSWORD_HINT}</span>
-          </label>
-          <label className="ui-field">
-            <span className="ui-fieldLabel">Role</span>
-            <Select value={role} onChange={(e) => setRole(e.target.value as RoleOpt)}>
-              {ROLE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </Select>
-          </label>
+      {createSuccess ? (
+        <div className="ui-textCaution" role="status" style={{ marginBottom: 12 }}>
+          {createSuccess}
         </div>
+      ) : null}
 
-        <div className="ui-actionsRow" style={{ marginTop: 12 }}>
-          <Button
-            type="button"
-            title={
-              emailFieldError(email) ||
-              passwordFieldError(password) ||
-              undefined
-            }
-            disabled={!canCreateUser}
-            variant={canCreateUser ? 'primary' : 'ghost'}
-            onClick={() => {
-              if (!token || !canCreateUser) return
-              setCreateEmailTouched(true)
-              const emailErr = emailFieldError(email)
-              const pwErr = passwordFieldError(password)
-              if (emailErr || pwErr) {
-                setCreateError(emailErr || pwErr)
-                return
-              }
-              setCreateError(null)
-              setCreateSuccess(null)
-              setCreating(true)
-              void (async () => {
-                try {
-                  const out = await api.adminCreateUser(token, {
-                    name: name.trim() || undefined,
-                    email: email.trim(),
-                    password: password.trim(),
-                    role,
-                  })
-                  setName('')
-                  setEmail('')
-                  setPassword('')
-                  setCreateSuccess('User created. Refreshing listâ€¦')
-                  const createdRow = out?.user as AdminUser | undefined
-                  await refresh(createdRow ?? null)
-                  const emailNote =
-                    out && typeof out === 'object' && 'emailNotice' in out && typeof out.emailNotice === 'string'
-                      ? out.emailNotice
-                      : null
-                  setCreateSuccess(
-                    emailNote
-                      ? `User added. ${emailNote}`
-                      : 'User added — they appear in the table below.',
-                  )
-                } catch (err: unknown) {
-                  setCreateError(err instanceof Error ? err.message : 'Failed to create user')
-                } finally {
-                  setCreating(false)
-                }
-              })()
+      {showCreateForm ? (
+        <Card className="ui-sectionCard" style={{ marginBottom: 12 }}>
+          <div className="ui-actionsRow" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
+            <h3 className="ui-sectionTitle" style={{ margin: 0 }}>
+              Create user
+            </h3>
+            <Button type="button" variant="ghost" onClick={closeCreateForm}>
+              Cancel
+            </Button>
+          </div>
+          <p className="ui-helpText" style={{ marginTop: 0, marginBottom: 12 }}>
+            Add a new staff or family account. Use a new email — not your own sign-in address.
+          </p>
+          <form
+            className="ui-formGrid"
+            autoComplete="off"
+            onSubmit={(e) => {
+              e.preventDefault()
             }}
           >
-            {creating ? 'Creatingâ€¦' : 'Create user'}
-          </Button>
+            <label className="ui-field">
+              <span className="ui-fieldLabel">Name</span>
+              <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Optional" autoComplete="off" />
+            </label>
+            <label className="ui-field">
+              <span className="ui-fieldLabel">Email</span>
+              <TextInput
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => setCreateEmailTouched(true)}
+                type="email"
+                name="admin-new-user-email"
+                autoComplete="off"
+                placeholder="new.user@example.com"
+              />
+              <EmailFieldError value={email} show={createEmailTouched} />
+            </label>
+            <label className="ui-field">
+              <span className="ui-fieldLabel">Password</span>
+              <PasswordInput
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                name="admin-new-user-password"
+                autoComplete="new-password"
+                placeholder="8+ characters, letter and number"
+              />
+              <span className="ui-helpText">{REGISTER_PASSWORD_HINT}</span>
+            </label>
+            <label className="ui-field">
+              <span className="ui-fieldLabel">Role</span>
+              <Select value={role} onChange={(e) => setRole(e.target.value as RoleOpt | '')}>
+                <option value="" disabled>
+                  Choose role…
+                </option>
+                {ROLE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          </form>
 
-          {createSuccess ? (
-            <div className="ui-textCaution" role="status" style={{ margin: 0 }}>
-              {createSuccess}
-            </div>
-          ) : null}
-          {createError ? (
-            <div className="ui-alert ui-alertError ui-textErrorStrong" role="alert">
-              {createError}
-            </div>
-          ) : null}
+          <div className="ui-actionsRow" style={{ marginTop: 12 }}>
+            <Button
+              type="button"
+              title={
+                !role
+                  ? 'Choose a role'
+                  : emailFieldError(email) ||
+                    passwordFieldError(password) ||
+                    undefined
+              }
+              disabled={!canCreateUser}
+              variant={canCreateUser ? 'primary' : 'ghost'}
+              onClick={() => {
+                if (!token || !canCreateUser || !role) return
+                setCreateEmailTouched(true)
+                const emailErr = emailFieldError(email)
+                const pwErr = passwordFieldError(password)
+                if (emailErr || pwErr) {
+                  setCreateError(emailErr || pwErr)
+                  return
+                }
+                setCreateError(null)
+                setCreateSuccess(null)
+                setCreating(true)
+                void (async () => {
+                  try {
+                    const out = await api.adminCreateUser(token, {
+                      name: name.trim() || undefined,
+                      email: email.trim(),
+                      password: password.trim(),
+                      role,
+                    })
+                    closeCreateForm()
+                    setCreateSuccess('User created. Refreshing list…')
+                    const createdRow = out?.user as AdminUser | undefined
+                    await refresh(createdRow ?? null)
+                    const emailNote =
+                      out && typeof out === 'object' && 'emailNotice' in out && typeof out.emailNotice === 'string'
+                        ? out.emailNotice
+                        : null
+                    setCreateSuccess(
+                      emailNote
+                        ? `User added. ${emailNote}`
+                        : 'User added — they appear in the table below.',
+                    )
+                  } catch (err: unknown) {
+                    setCreateError(err instanceof Error ? err.message : 'Failed to create user')
+                  } finally {
+                    setCreating(false)
+                  }
+                })()
+              }}
+            >
+              {creating ? 'Creating…' : 'Create user'}
+            </Button>
+
+            {createError ? (
+              <div className="ui-alert ui-alertError ui-textErrorStrong" role="alert">
+                {createError}
+              </div>
+            ) : null}
+          </div>
+        </Card>
+      ) : (
+        <div className="ui-actionsRow" style={{ marginBottom: 12 }}>
+          <Button type="button" variant="primary" onClick={() => setShowCreateForm(true)}>
+            Add new user
+          </Button>
         </div>
-      </Card>
+      )}
 
       <Card className="ui-sectionCard">
         <h3 className="ui-sectionTitle">All users</h3>
         {admins.length === 0 ? (
           <div className="ui-emptyState">
             <div className="ui-emptyTitle">No users yet</div>
-            <p className="ui-emptyText">Create the first user above, then refresh to see them here.</p>
+            <p className="ui-emptyText">Use Add new user to create the first account.</p>
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>

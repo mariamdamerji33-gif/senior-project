@@ -20,13 +20,27 @@ function emailButtonHtml(href, label) {
 </td></tr></table>`;
 }
 
-/** Web login URL from FRONTEND_ORIGIN (production must set it). */
-function signInUrlFromEnv() {
-  let o = String(process.env.FRONTEND_ORIGIN || '').trim().replace(/\/$/, '');
-  if (!o && String(process.env.NODE_ENV || '').toLowerCase() !== 'production') {
-    o = 'http://localhost:5173';
+/**
+ * FRONTEND_ORIGIN only when it is safe to put in recipient email (no localhost).
+ * Local URLs do not work on users' phones and look unprofessional in mail.
+ */
+function publicFrontendOrigin() {
+  const raw = String(process.env.FRONTEND_ORIGIN || '').trim().replace(/\/$/, '');
+  if (!raw) return '';
+  try {
+    const u = new URL(raw);
+    const h = u.hostname.toLowerCase();
+    if (h === 'localhost' || h === '127.0.0.1' || h === '[::1]') return '';
+  } catch {
+    return '';
   }
+  return raw;
+}
+
+/** Web /login URL for transactional emails only when FRONTEND_ORIGIN is public (HTTPS deploy). */
+function signInUrlFromEnv() {
+  const o = publicFrontendOrigin();
   return o ? `${o}/login` : '';
 }
 
-module.exports = { escapeHtml, emailButtonHtml, signInUrlFromEnv };
+module.exports = { escapeHtml, emailButtonHtml, signInUrlFromEnv, publicFrontendOrigin };

@@ -65,11 +65,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [token])
 
   const clearSession = useCallback(async () => {
+    tokenRef.current = null
     setUser(null)
     setToken(null)
     await AsyncStorage.removeItem(STORAGE_USER)
     await SecureStore.deleteItemAsync(STORAGE_TOKEN)
   }, [])
+
+  /** Ignore /me or refresh results that finish after logout or a newer login. */
+  const isSessionTokenCurrent = useCallback((requestToken: string) => tokenRef.current === requestToken, [])
 
   useEffect(() => {
     let mounted = true
@@ -80,10 +84,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (t && isJwtExpired(t)) {
           await AsyncStorage.removeItem(STORAGE_USER)
           await SecureStore.deleteItemAsync(STORAGE_TOKEN)
+          tokenRef.current = null
           setUser(null)
           setToken(null)
           return
         }
+        tokenRef.current = t || null
         setUser(u ? (JSON.parse(u) as AuthUser) : null)
         setToken(t || null)
       } finally {
@@ -105,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return
         }
         const res = await api.me(token)
-        if (cancelled) return
+        if (cancelled || !isSessionTokenCurrent(token)) return
         setUser(res.user)
         await AsyncStorage.setItem(STORAGE_USER, JSON.stringify(res.user))
       } catch (e) {
@@ -117,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [clearSession, token])
+  }, [clearSession, isSessionTokenCurrent, token])
 
   useEffect(() => {
     const onAppStateChange = (nextState: AppStateStatus) => {
@@ -125,9 +131,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         lastBackgroundAtRef.current = Date.now()
         return
       }
-      if (nextState !== 'active' || !token) return
+      const activeToken = tokenRef.current
+      if (nextState !== 'active' || !activeToken) return
       void (async () => {
-        if (isJwtExpired(token)) {
+        if (isJwtExpired(activeToken)) {
           await clearSession()
           return
         }
@@ -139,7 +146,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return
         }
         try {
-          const res = await api.me(token)
+          const res = await api.me(activeToken)
+          if (!isSessionTokenCurrent(activeToken)) return
           setUser(res.user)
           await AsyncStorage.setItem(STORAGE_USER, JSON.stringify(res.user))
         } catch {
@@ -149,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     const sub = AppState.addEventListener('change', onAppStateChange)
     return () => sub.remove()
-  }, [clearSession, token])
+  }, [clearSession, isSessionTokenCurrent])
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -157,12 +165,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token,
       loading,
       refreshUser: async () => {
-        if (!token) throw new Error('Not signed in')
-        if (isJwtExpired(token)) {
+        const t = tokenRef.current
+        if (!t) throw new Error('Not signed in')
+        if (isJwtExpired(t)) {
           await clearSession()
           throw new Error('Session expired. Please sign in again.')
         }
-        const res = await api.me(token)
+        const res = await api.me(t)
+        if (!isSessionTokenCurrent(t)) return
         setUser(res.user)
         await AsyncStorage.setItem(STORAGE_USER, JSON.stringify(res.user))
       },
@@ -175,6 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             'This mobile app is for family accounts, School Admin, and Coordinator (summary). Teachers and other staff should use the website.',
           )
         }
+        tokenRef.current = res.token
         setUser(res.user)
         setToken(res.token)
         await AsyncStorage.setItem(STORAGE_USER, JSON.stringify(res.user))
@@ -182,19 +193,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       logout: () => {
         const t = tokenRef.current
-        void (async () => {
-          if (t) {
-            try {
-              await api.logout(t)
-            } catch {
-              /* ignore network failure while clearing local session */
-            }
-          }
-          await clearSession()
-        })()
+        // Clear local session first so the UI returns to login immediately.
+        // Server logout is best-effort (Render cold start can take many seconds).
+        void clearSession()
+        if (t) {
+          void api.logout(t).catch(() => {
+            /* ignore network failure — user is already signed out locally */
+          })
+        }
       },
     }),
-    [clearSession, loading, token, user],
+    [clearSession, isSessionTokenCurrent, loading, token, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

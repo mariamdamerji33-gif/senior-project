@@ -28,6 +28,7 @@ export function AppNavigator() {
     <View style={[styles.root, { backgroundColor: appColors.pageBg }]}>
       <BrandWallpaperDecor />
       <Stack.Navigator
+        key={user ? `signed-in-${user.id}` : 'signed-out'}
         initialRouteName={user ? 'Home' : 'Login'}
         screenOptions={{
           contentStyle: { backgroundColor: 'transparent' },

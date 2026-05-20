@@ -17,6 +17,7 @@ const { sendPasswordChangedEmail } = require('../../utils/passwordChangedEmail')
 const { sendPasswordResetEmail } = require('../../utils/passwordResetEmail');
 const { sendAccountCreatedEmail } = require('../../utils/accountCreatedEmail');
 const { emailDeliveryNote } = require('../../utils/emailDeliveryNote');
+const { publicFrontendOrigin } = require('../../utils/emailHtml');
 const { familyLoginBlockedOnWeb, profilePhotoSignedUrlExpiresSec } = require('../../utils/clientChannel');
 
 function setNoStore(res) {
@@ -432,10 +433,10 @@ async function forgotPassword(req, res) {
     }
 
     if (smtpSendForgotPasswordResetEmail() && rawTokenForDev && user) {
-      const origin = frontendOriginForResetLinks();
+      const originForEmail = publicFrontendOrigin();
       const resetUrl =
-        origin && rawTokenForDev
-          ? `${origin}/reset-password?token=${encodeURIComponent(rawTokenForDev)}`
+        originForEmail && rawTokenForDev
+          ? `${originForEmail}/reset-password?token=${encodeURIComponent(rawTokenForDev)}`
           : '';
       void sendPasswordResetEmail({
         to: emailNorm,
